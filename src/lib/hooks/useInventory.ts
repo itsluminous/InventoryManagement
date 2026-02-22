@@ -82,25 +82,41 @@ export function useInventory() {
   };
 }
 
-export function useItemHistory(itemId: string) {
+export function useItemHistory(itemId: string, pageSize: number = 20) {
   const [transactions, setTransactions] = useState<
     InventoryTransactionWithItem[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const { user } = useAuthContext();
   const supabase = createClient();
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (page: number = 0, append: boolean = false) => {
     if (!user || !itemId) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      // Get transactions for the last 3 months by default
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      // Get total count first
+      const { count, error: countError } = await supabase
+        .from('inventory_transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('master_item_id', itemId);
+
+      if (countError) {
+        throw countError;
+      }
+
+      setTotalCount(count || 0);
+
+      // Get paginated transactions
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
 
       const { data, error: fetchError } = await supabase
         .from('inventory_transactions')
@@ -112,14 +128,23 @@ export function useItemHistory(itemId: string) {
         )
         .eq('user_id', user.id)
         .eq('master_item_id', itemId)
-        .gte('transaction_date', threeMonthsAgo.toISOString())
-        .order('transaction_date', { ascending: false });
+        .order('transaction_date', { ascending: false })
+        .range(from, to);
 
       if (fetchError) {
         throw fetchError;
       }
 
-      setTransactions(data || []);
+      const newTransactions = data || [];
+      
+      if (append) {
+        setTransactions(prev => [...prev, ...newTransactions]);
+      } else {
+        setTransactions(newTransactions);
+      }
+
+      setHasMore(newTransactions.length === pageSize && (count || 0) > to + 1);
+      setCurrentPage(page);
     } catch (err) {
       console.error('Error fetching item history:', err);
       setError(
@@ -128,16 +153,30 @@ export function useItemHistory(itemId: string) {
     } finally {
       setLoading(false);
     }
-  }, [user, itemId, supabase]);
+  }, [user, itemId, supabase, pageSize]);
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      fetchHistory(currentPage + 1, true);
+    }
+  }, [fetchHistory, currentPage, loading, hasMore]);
+
+  const refresh = useCallback(() => {
+    fetchHistory(0, false);
+  }, [fetchHistory]);
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory(0, false);
   }, [fetchHistory]);
 
   return {
     transactions,
     loading,
     error,
-    refetch: fetchHistory,
+    hasMore,
+    totalCount,
+    currentPage,
+    loadMore,
+    refetch: refresh,
   };
 }

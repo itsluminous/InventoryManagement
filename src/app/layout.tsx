@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { AuthErrorBoundary } from '@/lib/auth/AuthErrorBoundary';
+import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
+import { FeedbackProvider } from '@/components/layout/FeedbackSystem';
 
 export const metadata: Metadata = {
   title: {
@@ -50,11 +52,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body>
-        <ThemeProvider>
-          <AuthErrorBoundary>
-            <AuthProvider>{children}</AuthProvider>
-          </AuthErrorBoundary>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <FeedbackProvider>
+              <AuthErrorBoundary>
+                <AuthProvider>{children}</AuthProvider>
+              </AuthErrorBoundary>
+            </FeedbackProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

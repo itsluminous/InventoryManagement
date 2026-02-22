@@ -7,8 +7,6 @@ import {
   Typography,
   Box,
   IconButton,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
@@ -20,24 +18,22 @@ import { AddInventoryForm } from '@/components/inventory/AddInventoryForm';
 import { RemoveInventoryForm } from '@/components/inventory/RemoveInventoryForm';
 import { inventoryService } from '@/lib/services/inventoryService';
 import { AddInventoryData, RemoveInventoryData } from '@/lib/types/inventory';
+import { useFeedback, useAsyncOperation } from '@/components/layout/FeedbackSystem';
 
 export default function ItemDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthContext();
+  const feedback = useFeedback();
+  const { execute } = useAsyncOperation();
   const itemId = params.id as string;
 
-  const { transactions, loading, error, refetch } = useItemHistory(itemId);
+  const { transactions, loading, error, hasMore, totalCount, loadMore, refetch } = useItemHistory(itemId);
   const { items: masterItems } = useMasterItems();
   const { items: currentInventory, refetch: refetchInventory } = useInventory();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showRemoveForm, setShowRemoveForm] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-  const [removeLoading, setRemoveLoading] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
-  const [removeError, setRemoveError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Get item details from the first transaction
   const itemDetails =
@@ -45,72 +41,64 @@ export default function ItemDetailPage() {
 
   const handleAddInventory = () => {
     setShowAddForm(true);
-    setAddError(null);
   };
 
   const handleRemoveInventory = () => {
     setShowRemoveForm(true);
-    setRemoveError(null);
   };
 
   const handleAddSubmit = async (data: AddInventoryData) => {
     if (!user) return;
 
-    try {
-      setAddLoading(true);
-      setAddError(null);
+    const result = await execute(
+      () => inventoryService.addInventory(user.id, data),
+      {
+        loadingMessage: 'Adding inventory...',
+        successMessage: 'Inventory added successfully!',
+        errorMessage: 'Failed to add inventory',
+      }
+    );
 
-      await inventoryService.addInventory(user.id, data);
-
+    if (result) {
       setShowAddForm(false);
-      setSuccessMessage('Inventory added successfully!');
       refetch(); // Refresh the transaction history
       refetchInventory(); // Refresh current inventory
-    } catch (err) {
-      setAddError(
-        err instanceof Error ? err.message : 'Failed to add inventory'
-      );
-    } finally {
-      setAddLoading(false);
     }
   };
 
   const handleRemoveSubmit = async (data: RemoveInventoryData) => {
     if (!user) return;
 
-    try {
-      setRemoveLoading(true);
-      setRemoveError(null);
-
-      const result = await inventoryService.removeInventory(user.id, data);
-
-      if (result.success) {
-        setShowRemoveForm(false);
-        setSuccessMessage(
-          `Inventory removed successfully! Total cost: ₹${result.totalCost.toFixed(2)}`
-        );
-        refetch(); // Refresh the transaction history
-        refetchInventory(); // Refresh current inventory
-      } else {
-        setRemoveError(result.error || 'Failed to remove inventory');
+    const result = await execute(
+      async () => {
+        const removeResult = await inventoryService.removeInventory(user.id, data);
+        if (!removeResult.success) {
+          throw new Error(removeResult.error || 'Failed to remove inventory');
+        }
+        return removeResult;
+      },
+      {
+        loadingMessage: 'Removing inventory...',
+        errorMessage: 'Failed to remove inventory',
       }
-    } catch (err) {
-      setRemoveError(
-        err instanceof Error ? err.message : 'Failed to remove inventory'
+    );
+
+    if (result) {
+      setShowRemoveForm(false);
+      feedback.showSuccess(
+        `Inventory removed successfully! Total cost: ₹${result.totalCost.toFixed(2)}`
       );
-    } finally {
-      setRemoveLoading(false);
+      refetch(); // Refresh the transaction history
+      refetchInventory(); // Refresh current inventory
     }
   };
 
   const handleAddCancel = () => {
     setShowAddForm(false);
-    setAddError(null);
   };
 
   const handleRemoveCancel = () => {
     setShowRemoveForm(false);
-    setRemoveError(null);
   };
 
   const handleBack = () => {
@@ -134,8 +122,11 @@ export default function ItemDetailPage() {
         transactions={transactions}
         loading={loading}
         error={error}
+        hasMore={hasMore}
+        totalCount={totalCount}
         onAddInventory={handleAddInventory}
         onRemoveInventory={handleRemoveInventory}
+        onLoadMore={loadMore}
       />
 
       <AddInventoryForm
@@ -143,8 +134,6 @@ export default function ItemDetailPage() {
         masterItems={masterItems}
         onSubmit={handleAddSubmit}
         onCancel={handleAddCancel}
-        loading={addLoading}
-        error={addError}
         preselectedItemId={itemId}
       />
 
@@ -154,20 +143,8 @@ export default function ItemDetailPage() {
         currentInventory={currentInventory}
         onSubmit={handleRemoveSubmit}
         onCancel={handleRemoveCancel}
-        loading={removeLoading}
-        error={removeError}
         preselectedItemId={itemId}
       />
-
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={6000}
-        onClose={() => setSuccessMessage(null)}
-      >
-        <Alert onClose={() => setSuccessMessage(null)} severity="success">
-          {successMessage}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }
