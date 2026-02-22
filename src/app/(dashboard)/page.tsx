@@ -66,7 +66,14 @@ export default function HomePage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4, position: 'relative' }}>
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: { xs: 1, sm: 2, md: 4 },
+        px: { xs: 1, sm: 2 },
+        position: 'relative',
+      }}
+    >
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Current Inventory

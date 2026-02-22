@@ -44,7 +44,8 @@ export function AppShell({
             disableGutters={disableGutters}
             sx={{
               flexGrow: 1,
-              py: { xs: 2, sm: 3, md: 4 },
+              py: { xs: 1, sm: 2, md: 3 },
+              px: { xs: 0.5, sm: 2 },
               display: 'flex',
               flexDirection: 'column',
             }}

@@ -16,6 +16,8 @@ import {
   Button,
   Stack,
   LinearProgress,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,6 +51,8 @@ export function ItemHistory({
   onRemoveInventory,
   onLoadMore,
 }: ItemHistoryProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   if (loading && transactions.length === 0) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -71,9 +75,11 @@ export function ItemHistory({
     .reduce((sum, t) => sum + t.remaining_quantity * t.unit_price, 0);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: { xs: 0.5, sm: 1, md: 2 } }}>
       {/* Header with item info and actions */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper
+        sx={{ p: { xs: 1.5, sm: 2, md: 3 }, mb: { xs: 1.5, sm: 2, md: 3 } }}
+      >
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -110,7 +116,7 @@ export function ItemHistory({
               onClick={onAddInventory}
               color="success"
             >
-              Add Inventory
+              {isMobile ? 'Add' : 'Add Inventory'}
             </Button>
             <Button
               variant="outlined"
@@ -118,7 +124,7 @@ export function ItemHistory({
               onClick={onRemoveInventory}
               color="error"
             >
-              Remove Inventory
+              {isMobile ? 'Remove' : 'Remove Inventory'}
             </Button>
           </Stack>
         </Stack>
@@ -126,7 +132,7 @@ export function ItemHistory({
 
       {/* Transaction History */}
       <Paper>
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
           <Typography variant="h6" gutterBottom>
             Transaction History
           </Typography>
@@ -136,18 +142,20 @@ export function ItemHistory({
         {loading && transactions.length > 0 && <LinearProgress />}
 
         {transactions.length === 0 && !loading ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary">
               No transactions found for this item.
             </Typography>
           </Box>
         ) : (
           <>
-            <TableContainer sx={{ maxHeight: 600 }}>
+            <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Date</TableCell>
+                    <TableCell sx={{ minWidth: { xs: 60, sm: 120 } }}>
+                      Date
+                    </TableCell>
                     <TableCell>Type</TableCell>
                     <TableCell align="right">Quantity</TableCell>
                     <TableCell align="right">Unit Price</TableCell>
@@ -158,16 +166,49 @@ export function ItemHistory({
                 <TableBody>
                   {transactions.map(transaction => (
                     <TableRow key={transaction.id}>
-                      <TableCell>
-                        {new Date(
-                          transaction.transaction_date
-                        ).toLocaleDateString('en-IN', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <TableCell
+                        sx={{
+                          minWidth: { xs: 60, sm: 120 },
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {isMobile ? (
+                          <Box sx={{ fontSize: '0.7rem', lineHeight: 1.1 }}>
+                            <Box>
+                              {new Date(
+                                transaction.transaction_date
+                              ).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: '2-digit',
+                              })}
+                            </Box>
+                            <Box
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.65rem',
+                              }}
+                            >
+                              {new Date(
+                                transaction.transaction_date
+                              ).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                              })}
+                            </Box>
+                          </Box>
+                        ) : (
+                          new Date(
+                            transaction.transaction_date
+                          ).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        )}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -198,7 +239,7 @@ export function ItemHistory({
 
             {/* Load More Button */}
             {hasMore && onLoadMore && (
-              <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Box sx={{ p: { xs: 1.5, sm: 2 }, textAlign: 'center' }}>
                 <Button
                   variant="outlined"
                   startIcon={<ExpandMoreIcon />}
