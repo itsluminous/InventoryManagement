@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { MasterItem } from '@/lib/types/inventory';
@@ -12,7 +12,7 @@ export function useMasterItems() {
   const { user } = useAuthContext();
   const supabase = createClient();
 
-  const fetchMasterItems = async () => {
+  const fetchMasterItems = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -32,15 +32,17 @@ export function useMasterItems() {
       setItems(data || []);
     } catch (err) {
       console.error('Error fetching master items:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch master items');
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch master items'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, supabase]);
 
   useEffect(() => {
     fetchMasterItems();
-  }, [user]);
+  }, [fetchMasterItems]);
 
   return {
     items,

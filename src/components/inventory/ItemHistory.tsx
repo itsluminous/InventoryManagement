@@ -20,7 +20,6 @@ import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { InventoryTransactionWithItem } from '@/lib/types/inventory';
 
 interface ItemHistoryProps {
-  itemId: string;
   itemName?: string;
   itemUnit?: string;
   transactions: InventoryTransactionWithItem[];
@@ -31,7 +30,6 @@ interface ItemHistoryProps {
 }
 
 export function ItemHistory({
-  itemId,
   itemName,
   itemUnit,
   transactions,
@@ -59,13 +57,19 @@ export function ItemHistory({
   // Calculate total current value
   const totalValue = transactions
     .filter(t => t.transaction_type === 'add')
-    .reduce((sum, t) => sum + (t.remaining_quantity * t.unit_price), 0);
+    .reduce((sum, t) => sum + t.remaining_quantity * t.unit_price, 0);
 
   return (
     <Box sx={{ p: 2 }}>
       {/* Header with item info and actions */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={2}
+        >
           <Box>
             <Typography variant="h5" gutterBottom>
               {itemName || 'Item History'}
@@ -107,7 +111,7 @@ export function ItemHistory({
             Transaction History (Last 3 Months)
           </Typography>
         </Box>
-        
+
         {transactions.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="text.secondary">
@@ -128,15 +132,21 @@ export function ItemHistory({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.map((transaction) => (
+                {transactions.map(transaction => (
                   <TableRow key={transaction.id}>
                     <TableCell>
-                      {new Date(transaction.transaction_date).toLocaleDateString()}
+                      {new Date(
+                        transaction.transaction_date
+                      ).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <Chip
                         label={transaction.transaction_type.toUpperCase()}
-                        color={transaction.transaction_type === 'add' ? 'success' : 'error'}
+                        color={
+                          transaction.transaction_type === 'add'
+                            ? 'success'
+                            : 'error'
+                        }
                         size="small"
                       />
                     </TableCell>
@@ -149,9 +159,7 @@ export function ItemHistory({
                     <TableCell align="right">
                       ₹{transaction.total_price.toFixed(2)}
                     </TableCell>
-                    <TableCell>
-                      {transaction.notes || '-'}
-                    </TableCell>
+                    <TableCell>{transaction.notes || '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

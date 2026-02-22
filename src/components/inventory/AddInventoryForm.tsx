@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,6 +23,7 @@ interface AddInventoryFormProps {
   onCancel: () => void;
   loading?: boolean;
   error?: string | null;
+  preselectedItemId?: string; // Add preselected item ID prop
 }
 
 export function AddInventoryForm({
@@ -32,6 +33,7 @@ export function AddInventoryForm({
   onCancel,
   loading = false,
   error,
+  preselectedItemId,
 }: AddInventoryFormProps) {
   const [selectedItem, setSelectedItem] = useState<MasterItem | null>(null);
   const [quantity, setQuantity] = useState<string>('');
@@ -42,15 +44,28 @@ export function AddInventoryForm({
   // Filter items based on search text
   const filteredItems = useMemo(() => {
     if (!searchText) return masterItems;
-    
+
     return masterItems.filter(item =>
       item.name.toLowerCase().includes(searchText.toLowerCase())
     );
   }, [masterItems, searchText]);
 
+  // Effect to preselect item when form opens
+  useEffect(() => {
+    if (open && preselectedItemId && masterItems.length > 0) {
+      const preselectedItem = masterItems.find(
+        item => item.id === preselectedItemId
+      );
+      if (preselectedItem) {
+        setSelectedItem(preselectedItem);
+        setSearchText(preselectedItem.name);
+      }
+    }
+  }, [open, preselectedItemId, masterItems]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedItem || !quantity || !unitPrice) {
       return;
     }
@@ -95,14 +110,18 @@ export function AddInventoryForm({
     onCancel();
   };
 
-  const isValid = selectedItem && quantity && unitPrice && 
-    parseFloat(quantity) > 0 && parseFloat(unitPrice) >= 0;
+  const isValid =
+    selectedItem &&
+    quantity &&
+    unitPrice &&
+    parseFloat(quantity) > 0 &&
+    parseFloat(unitPrice) >= 0;
 
   return (
     <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>Add Inventory</DialogTitle>
-        
+
         <DialogContent>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -114,12 +133,12 @@ export function AddInventoryForm({
             {/* Item Selection with Search */}
             <Autocomplete
               options={filteredItems}
-              getOptionLabel={(option) => option.name}
+              getOptionLabel={option => option.name}
               value={selectedItem}
               onChange={(_, newValue) => setSelectedItem(newValue)}
               inputValue={searchText}
               onInputChange={(_, newInputValue) => setSearchText(newInputValue)}
-              renderInput={(params) => (
+              renderInput={params => (
                 <TextField
                   {...params}
                   label="Select Item"
@@ -155,10 +174,14 @@ export function AddInventoryForm({
               label="Quantity"
               type="number"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={e => setQuantity(e.target.value)}
               required
               inputProps={{ min: 0, step: 0.001 }}
-              helperText={selectedItem ? `Enter quantity in ${selectedItem.unit}` : 'Select an item first'}
+              helperText={
+                selectedItem
+                  ? `Enter quantity in ${selectedItem.unit}`
+                  : 'Select an item first'
+              }
             />
 
             {/* Unit Price Input */}
@@ -166,20 +189,24 @@ export function AddInventoryForm({
               label="Unit Price (₹)"
               type="number"
               value={unitPrice}
-              onChange={(e) => setUnitPrice(e.target.value)}
+              onChange={e => setUnitPrice(e.target.value)}
               required
               inputProps={{ min: 0, step: 0.01 }}
               helperText="Price per unit in Indian Rupees"
             />
 
             {/* Total Price Display */}
-            {quantity && unitPrice && !isNaN(parseFloat(quantity)) && !isNaN(parseFloat(unitPrice)) && (
-              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography variant="h6" color="primary">
-                  Total Price: ₹{(parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2)}
-                </Typography>
-              </Box>
-            )}
+            {quantity &&
+              unitPrice &&
+              !isNaN(parseFloat(quantity)) &&
+              !isNaN(parseFloat(unitPrice)) && (
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="h6" color="primary">
+                    Total Price: ₹
+                    {(parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2)}
+                  </Typography>
+                </Box>
+              )}
 
             {/* Notes Input */}
             <TextField
@@ -187,7 +214,7 @@ export function AddInventoryForm({
               multiline
               rows={3}
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               helperText="Add any additional notes about this inventory addition"
             />
           </Box>

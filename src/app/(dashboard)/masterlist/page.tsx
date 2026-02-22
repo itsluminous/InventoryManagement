@@ -58,7 +58,7 @@ const UNIT_OPTIONS = [
   { value: 'ton', label: 'Tons', category: 'Weight' },
 
   // Volume/Liquid
-  { value: 'l', label: 'Liters (l)', category: 'Liquid' },
+  { value: 'L', label: 'Liters (L)', category: 'Liquid' },
   { value: 'ml', label: 'Milliliters (ml)', category: 'Liquid' },
   { value: 'cup', label: 'Cups', category: 'Liquid' },
 

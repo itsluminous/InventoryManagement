@@ -3,7 +3,8 @@ import { Database } from '@/lib/supabase/types';
 // Database types
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type MasterItem = Database['public']['Tables']['master_items']['Row'];
-export type InventoryTransaction = Database['public']['Tables']['inventory_transactions']['Row'];
+export type InventoryTransaction =
+  Database['public']['Tables']['inventory_transactions']['Row'];
 
 // Computed types for UI
 export interface InventoryItem {
@@ -44,4 +45,21 @@ export interface MasterItemData {
 // Extended transaction type with master item details
 export interface InventoryTransactionWithItem extends InventoryTransaction {
   master_item?: MasterItem;
+}
+
+// FIFO-related types
+export interface InventoryBatch {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  remaining_quantity: number;
+  transaction_date: string;
+}
+
+export interface FIFORemovalResult {
+  success: boolean;
+  totalCost: number;
+  error?: string;
+  weightedAveragePrice?: number;
+  batchesAffected?: number;
 }

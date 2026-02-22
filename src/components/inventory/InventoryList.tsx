@@ -20,7 +20,12 @@ interface InventoryListProps {
   error?: string | null;
 }
 
-export function InventoryList({ items, onItemClick, loading, error }: InventoryListProps) {
+export function InventoryList({
+  items,
+  onItemClick,
+  loading,
+  error,
+}: InventoryListProps) {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -53,7 +58,7 @@ export function InventoryList({ items, onItemClick, loading, error }: InventoryL
   return (
     <Paper sx={{ m: 2 }}>
       <List>
-        {items.map((item, index) => (
+        {items.map(item => (
           <ListItem key={item.master_item_id} disablePadding>
             <ListItemButton
               onClick={() => onItemClick(item.master_item_id)}
@@ -69,7 +74,13 @@ export function InventoryList({ items, onItemClick, loading, error }: InventoryL
                   <Typography variant="body2" color="text.secondary">
                     Total Value: ₹{item.total_value.toFixed(2)}
                     {item.last_transaction_date && (
-                      <> • Last Updated: {new Date(item.last_transaction_date).toLocaleDateString()}</>
+                      <>
+                        {' '}
+                        • Last Updated:{' '}
+                        {new Date(
+                          item.last_transaction_date
+                        ).toLocaleDateString()}
+                      </>
                     )}
                   </Typography>
                 }

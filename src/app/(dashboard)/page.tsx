@@ -45,14 +45,16 @@ export default function HomePage() {
     try {
       setAddLoading(true);
       setAddError(null);
-      
+
       await inventoryService.addInventory(user.id, data);
-      
+
       setShowAddForm(false);
       setSuccessMessage('Inventory added successfully!');
       refetch(); // Refresh the inventory list
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Failed to add inventory');
+      setAddError(
+        err instanceof Error ? err.message : 'Failed to add inventory'
+      );
     } finally {
       setAddLoading(false);
     }
@@ -90,6 +92,7 @@ export default function HomePage() {
           position: 'fixed',
           bottom: 16,
           right: 16,
+          zIndex: 1000,
         }}
       >
         <AddIcon />

@@ -1,6 +1,6 @@
 # Inventory Management System
 
-A comprehensive inventory management system built for marriage hall businesses, featuring real-time tracking, FIFO cost calculation, and comprehensive reporting capabilities.
+A comprehensive inventory management system, featuring real-time tracking, FIFO cost calculation, and comprehensive reporting capabilities.
 
 ## 🚀 Features
 

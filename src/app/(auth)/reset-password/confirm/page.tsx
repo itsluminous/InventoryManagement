@@ -2,7 +2,7 @@
 
 import { Alert, Box, Button, TextField, Typography } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ const newPasswordSchema = z
 
 type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
-export default function ResetPasswordConfirmPage() {
+function ResetPasswordConfirmForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -147,5 +147,13 @@ export default function ResetPasswordConfirmPage() {
         </Button>
       </Box>
     </Box>
+  );
+}
+
+export default function ResetPasswordConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordConfirmForm />
+    </Suspense>
   );
 }

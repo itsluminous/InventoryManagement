@@ -1,19 +1,23 @@
 /**
  * Property-Based Tests for Inventory Display and Search
- * 
+ *
  * These tests validate universal properties that should hold across all scenarios:
  * - Property 3: Alphabetical Sorting Consistency
  * - Property 7: Search and Filter Functionality
  */
 
 import * as fc from 'fast-check';
-import { InventoryItem, MasterItem } from '@/lib/types/inventory';
 
 // Test data generators
 const inventoryItemArbitrary = fc.record({
   master_item_id: fc.uuid(),
   name: fc.string({ minLength: 1, maxLength: 20 }),
-  unit: fc.oneof(fc.constant('kg'), fc.constant('qty'), fc.constant('liters'), fc.constant('pieces')),
+  unit: fc.oneof(
+    fc.constant('kg'),
+    fc.constant('qty'),
+    fc.constant('liters'),
+    fc.constant('pieces')
+  ),
   current_quantity: fc.float({ min: 0, max: 1000 }),
   total_value: fc.float({ min: 0, max: 100000 }),
   last_transaction_date: fc.date().map(d => d.toISOString()),
@@ -23,15 +27,18 @@ const masterItemArbitrary = fc.record({
   id: fc.uuid(),
   user_id: fc.uuid(),
   name: fc.string({ minLength: 1, maxLength: 20 }),
-  unit: fc.oneof(fc.constant('kg'), fc.constant('qty'), fc.constant('liters'), fc.constant('pieces')),
+  unit: fc.oneof(
+    fc.constant('kg'),
+    fc.constant('qty'),
+    fc.constant('liters'),
+    fc.constant('pieces')
+  ),
   created_at: fc.date().map(d => d.toISOString()),
   updated_at: fc.date().map(d => d.toISOString()),
 });
 
 describe('Property 3: Alphabetical Sorting Consistency', () => {
   /**
-   * **Validates: Requirements 3.1**
-   * 
    * For any list of inventory items, the system should display them in alphabetical order by name.
    * This property ensures consistent sorting across all interfaces.
    */
@@ -39,17 +46,17 @@ describe('Property 3: Alphabetical Sorting Consistency', () => {
     fc.assert(
       fc.property(
         fc.array(inventoryItemArbitrary, { minLength: 2, maxLength: 10 }),
-        (items) => {
+        items => {
           // Sort items using the same logic as the component
-          const sortedItems = [...items].sort((a, b) => 
+          const sortedItems = [...items].sort((a, b) =>
             a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
           );
 
           // Property: sorted array should be in alphabetical order
           for (let i = 0; i < sortedItems.length - 1; i++) {
             const comparison = sortedItems[i].name.localeCompare(
-              sortedItems[i + 1].name, 
-              undefined, 
+              sortedItems[i + 1].name,
+              undefined,
               { sensitivity: 'base' }
             );
             expect(comparison).toBeLessThanOrEqual(0);
@@ -64,15 +71,17 @@ describe('Property 3: Alphabetical Sorting Consistency', () => {
     fc.assert(
       fc.property(
         fc.array(inventoryItemArbitrary, { minLength: 3, maxLength: 8 }),
-        (originalItems) => {
+        originalItems => {
           // Create shuffled version of the same items
-          const shuffledItems = [...originalItems].sort(() => Math.random() - 0.5);
+          const shuffledItems = [...originalItems].sort(
+            () => Math.random() - 0.5
+          );
 
           // Sort both arrays
-          const sortedOriginal = [...originalItems].sort((a, b) => 
+          const sortedOriginal = [...originalItems].sort((a, b) =>
             a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
           );
-          const sortedShuffled = [...shuffledItems].sort((a, b) => 
+          const sortedShuffled = [...shuffledItems].sort((a, b) =>
             a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
           );
 
@@ -89,9 +98,7 @@ describe('Property 3: Alphabetical Sorting Consistency', () => {
 
 describe('Property 7: Search and Filter Functionality', () => {
   /**
-   * **Validates: Requirements 5.2**
-   * 
-   * For any search input in dropdowns or filters, the system should return results that contain 
+   * For any search input in dropdowns or filters, the system should return results that contain
    * the search term (case-insensitive) and maintain real-time filtering as the user types.
    */
   it('should filter master items based on search input (case-insensitive)', () => {
@@ -111,9 +118,11 @@ describe('Property 7: Search and Filter Functionality', () => {
           );
 
           // Property: no excluded items should contain the search term
-          const excludedItems = masterItems.filter(item => !filteredItems.includes(item));
-          const noFalseExclusions = excludedItems.every(item =>
-            !item.name.toLowerCase().includes(searchTerm.toLowerCase())
+          const excludedItems = masterItems.filter(
+            item => !filteredItems.includes(item)
+          );
+          const noFalseExclusions = excludedItems.every(
+            item => !item.name.toLowerCase().includes(searchTerm.toLowerCase())
           );
 
           expect(allResultsValid).toBe(true);
@@ -128,12 +137,12 @@ describe('Property 7: Search and Filter Functionality', () => {
     fc.assert(
       fc.property(
         fc.array(masterItemArbitrary, { minLength: 1, maxLength: 8 }),
-        (masterItems) => {
+        masterItems => {
           // When search term is empty, all items should be available
           const searchTerm = '';
-          
+
           const filteredItems = masterItems.filter(item =>
-            searchTerm === '' || item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
           );
 
           // Property: empty search should return all items
@@ -154,7 +163,8 @@ describe('Property 7: Search and Filter Functionality', () => {
           // Test different case variations of the same search term
           const lowerCaseTerm = baseTerm.toLowerCase();
           const upperCaseTerm = baseTerm.toUpperCase();
-          const mixedCaseTerm = baseTerm.charAt(0).toUpperCase() + baseTerm.slice(1).toLowerCase();
+          const mixedCaseTerm =
+            baseTerm.charAt(0).toUpperCase() + baseTerm.slice(1).toLowerCase();
 
           const filterByTerm = (term: string) =>
             masterItems.filter(item =>
@@ -166,8 +176,12 @@ describe('Property 7: Search and Filter Functionality', () => {
           const mixedResults = filterByTerm(mixedCaseTerm);
 
           // Property: case variations should produce identical results
-          expect(lowerResults.map(item => item.id)).toEqual(upperResults.map(item => item.id));
-          expect(upperResults.map(item => item.id)).toEqual(mixedResults.map(item => item.id));
+          expect(lowerResults.map(item => item.id)).toEqual(
+            upperResults.map(item => item.id)
+          );
+          expect(upperResults.map(item => item.id)).toEqual(
+            mixedResults.map(item => item.id)
+          );
         }
       ),
       { numRuns: 20 }
