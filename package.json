@@ -14,7 +14,9 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "analyze": "ANALYZE=true npm run build",
+    "build:analyze": "npm run analyze"
   },
   "dependencies": {
     "@emotion/react": "^11.11.0",
@@ -36,6 +38,7 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.40.0",
     "@testing-library/jest-dom": "^6.1.0",
     "@testing-library/react": "^14.1.0",
