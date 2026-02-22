@@ -10,6 +10,8 @@ import {
   CircularProgress,
   Alert,
   Paper,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { InventoryItem } from '@/lib/types/inventory';
 
@@ -26,6 +28,8 @@ export function InventoryList({
   loading,
   error,
 }: InventoryListProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -71,18 +75,28 @@ export function InventoryList({
                   </Typography>
                 }
                 secondary={
-                  <Typography variant="body2" color="text.secondary">
-                    Total Value: ₹{item.total_value.toFixed(2)}
-                    {item.last_transaction_date && (
-                      <>
-                        {' '}
-                        • Last Updated:{' '}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Value: ₹{item.total_value.toFixed(2)}
+                      {!isMobile && item.last_transaction_date && (
+                        <>
+                          {' '}
+                          • Last Updated:{' '}
+                          {new Date(
+                            item.last_transaction_date
+                          ).toLocaleDateString()}
+                        </>
+                      )}
+                    </Typography>
+                    {isMobile && item.last_transaction_date && (
+                      <Typography variant="body2" color="text.secondary">
+                        Last Updated:{' '}
                         {new Date(
                           item.last_transaction_date
                         ).toLocaleDateString()}
-                      </>
+                      </Typography>
                     )}
-                  </Typography>
+                  </Box>
                 }
               />
             </ListItemButton>

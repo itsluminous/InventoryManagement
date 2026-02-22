@@ -4,11 +4,13 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { AuthErrorBoundary } from '@/lib/auth/AuthErrorBoundary';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { FeedbackProvider } from '@/components/layout/FeedbackSystem';
+import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt';
+import { OfflineIndicator } from '@/components/layout/OfflineIndicator';
 
 export const metadata: Metadata = {
   title: {
     default: 'Inventory Management System',
-    template: '%s | IMS',
+    template: '%s | Inventory Management System',
   },
   description:
     'A comprehensive inventory management system for marriage hall businesses',
@@ -25,14 +27,23 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'IMS',
+    title: 'Inventory Management System',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/inventory-icon.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#1976d2' },
-    { media: '(prefers-color-scheme: dark)', color: '#90caf9' },
+    { media: '(prefers-color-scheme: light)', color: '#9e9e9e' },
+    { media: '(prefers-color-scheme: dark)', color: '#9e9e9e' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -48,6 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
@@ -56,7 +68,11 @@ export default function RootLayout({
           <ThemeProvider>
             <FeedbackProvider>
               <AuthErrorBoundary>
-                <AuthProvider>{children}</AuthProvider>
+                <AuthProvider>
+                  {children}
+                  <PWAInstallPrompt showInSnackbar />
+                  <OfflineIndicator />
+                </AuthProvider>
               </AuthErrorBoundary>
             </FeedbackProvider>
           </ThemeProvider>

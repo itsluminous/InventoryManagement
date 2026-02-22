@@ -26,7 +26,11 @@ interface LoadingState {
 }
 
 interface FeedbackContextType {
-  showMessage: (message: string, severity?: AlertColor, duration?: number) => void;
+  showMessage: (
+    message: string,
+    severity?: AlertColor,
+    duration?: number
+  ) => void;
   showSuccess: (message: string, duration?: number) => void;
   showError: (message: string, duration?: number) => void;
   showWarning: (message: string, duration?: number) => void;
@@ -35,7 +39,9 @@ interface FeedbackContextType {
   clearMessages: () => void;
 }
 
-const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
+const FeedbackContext = createContext<FeedbackContextType | undefined>(
+  undefined
+);
 
 export function useFeedback() {
   const context = useContext(FeedbackContext);
@@ -56,7 +62,11 @@ export function FeedbackProvider({ children }: FeedbackProviderProps) {
   });
 
   const showMessage = useCallback(
-    (message: string, severity: AlertColor = 'info', duration: number = 6000) => {
+    (
+      message: string,
+      severity: AlertColor = 'info',
+      duration: number = 6000
+    ) => {
       const id = Date.now().toString();
       const newMessage: FeedbackMessage = {
         id,
@@ -219,7 +229,7 @@ export function useAsyncOperation() {
   const feedback = useFeedback();
 
   const execute = useCallback(
-    async <T>(
+    async function <T>(
       operation: () => Promise<T>,
       options?: {
         loadingMessage?: string;
@@ -227,7 +237,7 @@ export function useAsyncOperation() {
         errorMessage?: string;
         showProgress?: boolean;
       }
-    ): Promise<T | null> => {
+    ): Promise<T | null> {
       try {
         feedback.setLoading(true, options?.loadingMessage);
 

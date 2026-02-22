@@ -94,66 +94,71 @@ export function useItemHistory(itemId: string, pageSize: number = 20) {
   const { user } = useAuthContext();
   const supabase = createClient();
 
-  const fetchHistory = useCallback(async (page: number = 0, append: boolean = false) => {
-    if (!user || !itemId) return;
+  const fetchHistory = useCallback(
+    async (page: number = 0, append: boolean = false) => {
+      if (!user || !itemId) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Get total count first
-      const { count, error: countError } = await supabase
-        .from('inventory_transactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('master_item_id', itemId);
+        // Get total count first
+        const { count, error: countError } = await supabase
+          .from('inventory_transactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('master_item_id', itemId);
 
-      if (countError) {
-        throw countError;
-      }
+        if (countError) {
+          throw countError;
+        }
 
-      setTotalCount(count || 0);
+        setTotalCount(count || 0);
 
-      // Get paginated transactions
-      const from = page * pageSize;
-      const to = from + pageSize - 1;
+        // Get paginated transactions
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
 
-      const { data, error: fetchError } = await supabase
-        .from('inventory_transactions')
-        .select(
-          `
+        const { data, error: fetchError } = await supabase
+          .from('inventory_transactions')
+          .select(
+            `
           *,
           master_item:master_items(*)
         `
-        )
-        .eq('user_id', user.id)
-        .eq('master_item_id', itemId)
-        .order('transaction_date', { ascending: false })
-        .range(from, to);
+          )
+          .eq('user_id', user.id)
+          .eq('master_item_id', itemId)
+          .order('transaction_date', { ascending: false })
+          .range(from, to);
 
-      if (fetchError) {
-        throw fetchError;
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        const newTransactions = data || [];
+
+        if (append) {
+          setTransactions(prev => [...prev, ...newTransactions]);
+        } else {
+          setTransactions(newTransactions);
+        }
+
+        setHasMore(
+          newTransactions.length === pageSize && (count || 0) > to + 1
+        );
+        setCurrentPage(page);
+      } catch (err) {
+        console.error('Error fetching item history:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch item history'
+        );
+      } finally {
+        setLoading(false);
       }
-
-      const newTransactions = data || [];
-      
-      if (append) {
-        setTransactions(prev => [...prev, ...newTransactions]);
-      } else {
-        setTransactions(newTransactions);
-      }
-
-      setHasMore(newTransactions.length === pageSize && (count || 0) > to + 1);
-      setCurrentPage(page);
-    } catch (err) {
-      console.error('Error fetching item history:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to fetch item history'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [user, itemId, supabase, pageSize]);
+    },
+    [user, itemId, supabase, pageSize]
+  );
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {

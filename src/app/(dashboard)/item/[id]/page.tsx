@@ -2,12 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  Container,
-  Typography,
-  Box,
-  IconButton,
-} from '@mui/material';
+import { Container, Typography, Box, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { useItemHistory } from '@/lib/hooks/useInventory';
@@ -18,7 +13,10 @@ import { AddInventoryForm } from '@/components/inventory/AddInventoryForm';
 import { RemoveInventoryForm } from '@/components/inventory/RemoveInventoryForm';
 import { inventoryService } from '@/lib/services/inventoryService';
 import { AddInventoryData, RemoveInventoryData } from '@/lib/types/inventory';
-import { useFeedback, useAsyncOperation } from '@/components/layout/FeedbackSystem';
+import {
+  useFeedback,
+  useAsyncOperation,
+} from '@/components/layout/FeedbackSystem';
 
 export default function ItemDetailPage() {
   const params = useParams();
@@ -28,7 +26,15 @@ export default function ItemDetailPage() {
   const { execute } = useAsyncOperation();
   const itemId = params.id as string;
 
-  const { transactions, loading, error, hasMore, totalCount, loadMore, refetch } = useItemHistory(itemId);
+  const {
+    transactions,
+    loading,
+    error,
+    hasMore,
+    totalCount,
+    loadMore,
+    refetch,
+  } = useItemHistory(itemId);
   const { items: masterItems } = useMasterItems();
   const { items: currentInventory, refetch: refetchInventory } = useInventory();
 
@@ -71,7 +77,10 @@ export default function ItemDetailPage() {
 
     const result = await execute(
       async () => {
-        const removeResult = await inventoryService.removeInventory(user.id, data);
+        const removeResult = await inventoryService.removeInventory(
+          user.id,
+          data
+        );
         if (!removeResult.success) {
           throw new Error(removeResult.error || 'Failed to remove inventory');
         }

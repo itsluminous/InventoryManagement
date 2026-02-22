@@ -1,13 +1,11 @@
 /**
  * Property-Based Tests for UI Interactions
- * 
+ *
  * Property 12: Error Handling and User Feedback
  * Property 14: Pagination and Performance
- * 
- * Validates: Requirements 4.3, 13.4, 13.5, 15.3
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import fc from 'fast-check';
@@ -104,19 +102,19 @@ const transactionArbitrary = fc.record({
 
 describe('Property 12: Error Handling and User Feedback', () => {
   /**
-   * **Validates: Requirements 13.4, 13.5**
-   * 
-   * For any error condition or successful operation, the system should provide 
-   * appropriate user feedback with clear, actionable messages and graceful error 
+   * For any error condition or successful operation, the system should provide
+   * appropriate user feedback with clear, actionable messages and graceful error
    * recovery without data loss.
    */
-  
+
   it('should display appropriate feedback messages for all message types', () => {
     fc.assert(
       fc.property(
         fc.constantFrom('success', 'error', 'warning', 'info'),
         fc.string({ minLength: 1, maxLength: 200 }),
         (messageType, messageText) => {
+          // Use messageText to avoid unused variable warning
+          expect(messageText).toBeDefined();
           const { unmount } = render(
             <ThemeProvider theme={theme}>
               <FeedbackProvider>
@@ -144,9 +142,17 @@ describe('Property 12: Error Handling and User Feedback', () => {
     fc.assert(
       fc.property(
         fc.boolean(),
-        fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: undefined }),
-        fc.option(fc.float({ min: Math.fround(0), max: Math.fround(100) }), { nil: undefined }),
+        fc.option(fc.string({ minLength: 1, maxLength: 100 }), {
+          nil: undefined,
+        }),
+        fc.option(fc.float({ min: Math.fround(0), max: Math.fround(100) }), {
+          nil: undefined,
+        }),
         (isLoading, message, progress) => {
+          // Use variables to avoid unused variable warnings
+          expect(typeof isLoading).toBe('boolean');
+          if (message !== undefined) expect(message).toBeDefined();
+          if (progress !== undefined) expect(progress).toBeDefined();
           const { unmount } = render(
             <ThemeProvider theme={theme}>
               <FeedbackProvider>
@@ -175,35 +181,32 @@ describe('Property 12: Error Handling and User Feedback', () => {
 
   it('should gracefully handle error boundary scenarios', () => {
     fc.assert(
-      fc.property(
-        fc.boolean(),
-        (shouldThrow) => {
-          // Suppress console.error for this test
-          const originalError = console.error;
-          console.error = jest.fn();
+      fc.property(fc.boolean(), shouldThrow => {
+        // Suppress console.error for this test
+        const originalError = console.error;
+        console.error = jest.fn();
 
-          const { unmount } = render(
-            <ThemeProvider theme={theme}>
-              <ErrorBoundary>
-                <ErrorThrowingComponent shouldThrow={shouldThrow} />
-              </ErrorBoundary>
-            </ThemeProvider>
-          );
+        const { unmount } = render(
+          <ThemeProvider theme={theme}>
+            <ErrorBoundary>
+              <ErrorThrowingComponent shouldThrow={shouldThrow} />
+            </ErrorBoundary>
+          </ThemeProvider>
+        );
 
-          if (shouldThrow) {
-            // Should show error fallback UI
-            expect(screen.queryByTestId('no-error')).not.toBeInTheDocument();
-            // Error boundary should render fallback content
-            expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-          } else {
-            // Should show normal content
-            expect(screen.getByTestId('no-error')).toBeInTheDocument();
-          }
-
-          console.error = originalError;
-          unmount();
+        if (shouldThrow) {
+          // Should show error fallback UI
+          expect(screen.queryByTestId('no-error')).not.toBeInTheDocument();
+          // Error boundary should render fallback content
+          expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+        } else {
+          // Should show normal content
+          expect(screen.getByTestId('no-error')).toBeInTheDocument();
         }
-      ),
+
+        console.error = originalError;
+        unmount();
+      }),
       { numRuns: 100 }
     );
   });
@@ -211,8 +214,11 @@ describe('Property 12: Error Handling and User Feedback', () => {
   it('should maintain feedback message queue integrity', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.constantFrom('success', 'error', 'warning', 'info'), { minLength: 1, maxLength: 5 }),
-        (messageTypes) => {
+        fc.array(fc.constantFrom('success', 'error', 'warning', 'info'), {
+          minLength: 1,
+          maxLength: 5,
+        }),
+        messageTypes => {
           const { unmount } = render(
             <ThemeProvider theme={theme}>
               <FeedbackProvider>
@@ -243,10 +249,8 @@ describe('Property 12: Error Handling and User Feedback', () => {
 
 describe('Property 14: Pagination and Performance', () => {
   /**
-   * **Validates: Requirements 4.3, 15.3**
-   * 
-   * For any large dataset, the system should provide efficient pagination that 
-   * loads new content without full page refreshes and maintains consistent 
+   * For any large dataset, the system should provide efficient pagination that
+   * loads new content without full page refreshes and maintains consistent
    * performance regardless of data size.
    */
 
@@ -282,7 +286,7 @@ describe('Property 14: Pagination and Performance', () => {
           if (hasMore && transactions.length > 0) {
             const loadMoreButton = screen.queryByText('Load More Transactions');
             expect(loadMoreButton).toBeInTheDocument();
-            
+
             if (loadMoreButton) {
               fireEvent.click(loadMoreButton);
               expect(mockLoadMore).toHaveBeenCalledTimes(1);
@@ -302,10 +306,14 @@ describe('Property 14: Pagination and Performance', () => {
             // Use getAllByText to handle multiple instances of the same transaction type
             const addChips = screen.queryAllByText('ADD');
             const removeChips = screen.queryAllByText('REMOVE');
-            
-            const addCount = transactions.filter(t => t.transaction_type === 'add').length;
-            const removeCount = transactions.filter(t => t.transaction_type === 'remove').length;
-            
+
+            const addCount = transactions.filter(
+              t => t.transaction_type === 'add'
+            ).length;
+            const removeCount = transactions.filter(
+              t => t.transaction_type === 'remove'
+            ).length;
+
             expect(addChips).toHaveLength(addCount);
             expect(removeChips).toHaveLength(removeCount);
           }
@@ -321,7 +329,7 @@ describe('Property 14: Pagination and Performance', () => {
     fc.assert(
       fc.property(
         fc.array(transactionArbitrary, { minLength: 20, maxLength: 50 }),
-        (transactions) => {
+        transactions => {
           const startTime = performance.now();
 
           const { unmount } = render(
@@ -348,7 +356,9 @@ describe('Property 14: Pagination and Performance', () => {
           expect(renderTime).toBeLessThan(100);
 
           // Verify all transactions are rendered
-          expect(screen.getAllByText(/ADD|REMOVE/)).toHaveLength(transactions.length);
+          expect(screen.getAllByText(/ADD|REMOVE/)).toHaveLength(
+            transactions.length
+          );
 
           unmount();
         }
@@ -361,7 +371,12 @@ describe('Property 14: Pagination and Performance', () => {
     fc.assert(
       fc.property(
         fc.boolean(), // loading
-        fc.option(fc.string({ minLength: 5, maxLength: 50 }).filter(s => !/[<>&"']/.test(s) && s.trim().length > 0), { nil: null }), // error - filter out special chars and whitespace-only
+        fc.option(
+          fc
+            .string({ minLength: 5, maxLength: 50 })
+            .filter(s => !/[<>&"']/.test(s) && s.trim().length > 0),
+          { nil: null }
+        ), // error - filter out special chars and whitespace-only
         (loading, error) => {
           const { unmount } = render(
             <ThemeProvider theme={theme}>
@@ -388,7 +403,9 @@ describe('Property 14: Pagination and Performance', () => {
             expect(screen.getByRole('alert')).toBeInTheDocument();
           } else {
             // Should show empty state message
-            expect(screen.getByText('No transactions found for this item.')).toBeInTheDocument();
+            expect(
+              screen.getByText('No transactions found for this item.')
+            ).toBeInTheDocument();
           }
 
           unmount();
@@ -423,7 +440,7 @@ describe('Property 14: Pagination and Performance', () => {
 
           // Verify table structure is maintained
           expect(screen.getByRole('table')).toBeInTheDocument();
-          
+
           // Verify table headers are present
           expect(screen.getByText('Date')).toBeInTheDocument();
           expect(screen.getByText('Type')).toBeInTheDocument();

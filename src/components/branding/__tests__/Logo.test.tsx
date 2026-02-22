@@ -62,21 +62,13 @@ describe('Logo Component - Property-Based Tests', () => {
             (variant === 'auto' && responsive && isMobile);
 
           if (shouldShowMobile) {
-            // Mobile variant should show "IMS" with styled letters
-            const imsText = container.textContent;
-            expect(imsText).toContain('I');
-            expect(imsText).toContain('M');
-            expect(imsText).toContain('S');
+            // Mobile variant should show "Inventory"
+            const text = container.textContent;
+            expect(text).toContain('Inventory');
 
-            // Should not contain full words when in mobile mode
-            if (
-              variant === 'mobile' ||
-              (variant === 'auto' && isMobile && responsive)
-            ) {
-              expect(imsText).not.toContain('Inventory');
-              expect(imsText).not.toContain('Management');
-              expect(imsText).not.toContain('System');
-            }
+            // Should not contain full system name when in mobile mode
+            expect(text).not.toContain('Management');
+            expect(text).not.toContain('System');
           } else {
             // Desktop variant should show full name
             const fullText = container.textContent;
@@ -86,8 +78,8 @@ describe('Logo Component - Property-Based Tests', () => {
           }
 
           // Logo should always be present
-          const svgElement = container.querySelector('svg');
-          expect(svgElement).toBeInTheDocument();
+          const imageElement = container.querySelector('img');
+          expect(imageElement).toBeInTheDocument();
 
           // Component should render without errors
           expect(container.firstChild).toBeInTheDocument();
@@ -120,8 +112,8 @@ describe('Logo Component - Property-Based Tests', () => {
           );
 
           // Logo should render with appropriate size
-          const svgElement = container.querySelector('svg');
-          expect(svgElement).toBeInTheDocument();
+          const imageElement = container.querySelector('img');
+          expect(imageElement).toBeInTheDocument();
 
           // Text should be present (either IMS or full name)
           const textContent = container.textContent;
@@ -194,31 +186,26 @@ describe('Logo Component - Property-Based Tests', () => {
             'small' | 'medium' | 'large'
           >,
           isMobile: fc.boolean(),
-          showFullName: fc.option(fc.boolean()),
         }),
-        ({ variant, size, isMobile, showFullName }) => {
+        ({ variant, size, isMobile }) => {
           mockUseMediaQuery.mockReturnValue(isMobile);
 
           const { container } = render(
             <TestWrapper>
-              <Logo
-                variant={variant}
-                size={size}
-                showFullName={showFullName ?? undefined}
-              />
+              <Logo variant={variant} size={size} />
             </TestWrapper>
           );
 
-          // SVG logo should always be present
-          const svgElement = container.querySelector('svg');
-          expect(svgElement).toBeInTheDocument();
+          // Image logo should always be present
+          const imageElement = container.querySelector('img');
+          expect(imageElement).toBeInTheDocument();
 
           // Text content should always be present
           const textContent = container.textContent;
           expect(textContent).toBeTruthy();
 
-          // Should contain at least the core brand letters I, M, S
-          expect(textContent).toMatch(/[IMS]/);
+          // Should always contain "Inventory" as the core brand text
+          expect(textContent).toContain('Inventory');
 
           // Component structure should be consistent
           const logoContainer = container.firstChild;

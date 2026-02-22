@@ -7,11 +7,11 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     mode,
     ...(mode === 'light'
       ? {
-          // Light mode colors
+          // Light mode colors - using lighter gray instead of blue
           primary: {
-            main: '#1976d2',
-            light: '#42a5f5',
-            dark: '#1565c0',
+            main: '#9e9e9e', // Light gray (was medium gray)
+            light: '#e0e0e0', // Very light gray
+            dark: '#757575', // Medium gray (for contrast)
             contrastText: '#ffffff',
           },
           secondary: {
@@ -30,11 +30,11 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           },
         }
       : {
-          // Dark mode colors
+          // Dark mode colors - using gray instead of blue
           primary: {
-            main: '#90caf9',
-            light: '#e3f2fd',
-            dark: '#42a5f5',
+            main: '#9e9e9e', // Light gray for dark mode
+            light: '#e0e0e0', // Very light gray
+            dark: '#616161', // Medium gray
             contrastText: '#000000',
           },
           secondary: {

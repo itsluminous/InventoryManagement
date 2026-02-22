@@ -35,70 +35,91 @@ export class NetworkError extends Error {
 /**
  * Maps Supabase errors to user-friendly messages
  */
-export function mapSupabaseError(error: any): string {
+export function mapSupabaseError(error: unknown): string {
   if (!error) return 'An unknown error occurred';
 
+  // Type guard to check if error has the expected properties
+  const hasCode = (err: unknown): err is { code: string } =>
+    typeof err === 'object' && err !== null && 'code' in err;
+
+  const hasMessage = (err: unknown): err is { message: string } =>
+    typeof err === 'object' && err !== null && 'message' in err;
+
+  const hasConstraint = (err: unknown): err is { constraint?: string } =>
+    typeof err === 'object' && err !== null && 'constraint' in err;
+
   // Handle specific Supabase error codes
-  switch (error.code) {
-    case '23505': // Unique violation
-      if (error.constraint?.includes('master_items_user_id_name_key')) {
-        return 'An item with this name already exists';
-      }
-      return 'This record already exists';
+  if (hasCode(error)) {
+    switch (error.code) {
+      case '23505': // Unique violation
+        if (
+          hasConstraint(error) &&
+          error.constraint?.includes('master_items_user_id_name_key')
+        ) {
+          return 'An item with this name already exists';
+        }
+        return 'This record already exists';
 
-    case '23503': // Foreign key violation
-      if (error.constraint?.includes('inventory_transactions_master_item_id_fkey')) {
-        return 'Cannot delete item that has inventory transactions';
-      }
-      return 'Cannot delete item that is referenced by other records';
+      case '23503': // Foreign key violation
+        if (
+          hasConstraint(error) &&
+          error.constraint?.includes(
+            'inventory_transactions_master_item_id_fkey'
+          )
+        ) {
+          return 'Cannot delete item that has inventory transactions';
+        }
+        return 'Cannot delete item that is referenced by other records';
 
-    case '23502': // Not null violation
-      return 'Required field is missing';
+      case '23502': // Not null violation
+        return 'Required field is missing';
 
-    case 'PGRST116': // No rows returned
-      return 'Record not found';
+      case 'PGRST116': // No rows returned
+        return 'Record not found';
 
-    case 'PGRST301': // Row Level Security violation
-      return 'You do not have permission to access this data';
+      case 'PGRST301': // Row Level Security violation
+        return 'You do not have permission to access this data';
 
-    case '42501': // Insufficient privilege
-      return 'You do not have permission to perform this action';
+      case '42501': // Insufficient privilege
+        return 'You do not have permission to perform this action';
 
-    case '08006': // Connection failure
-      return 'Database connection failed. Please try again.';
+      case '08006': // Connection failure
+        return 'Database connection failed. Please try again.';
 
-    case '08003': // Connection does not exist
-      return 'Database connection lost. Please refresh the page.';
-
-    default:
-      // Handle auth errors
-      if (error.message?.includes('Invalid login credentials')) {
-        return 'Invalid email or password';
-      }
-      if (error.message?.includes('Email not confirmed')) {
-        return 'Please check your email and click the confirmation link';
-      }
-      if (error.message?.includes('User already registered')) {
-        return 'An account with this email already exists';
-      }
-      if (error.message?.includes('Password should be at least')) {
-        return 'Password must be at least 6 characters long';
-      }
-
-      // Return the original message if it's user-friendly
-      if (error.message && error.message.length < 100) {
-        return error.message;
-      }
-
-      return 'An unexpected error occurred. Please try again.';
+      case '08003': // Connection does not exist
+        return 'Database connection lost. Please refresh the page.';
+    }
   }
+
+  // Handle auth errors
+  if (hasMessage(error)) {
+    if (error.message.includes('Invalid login credentials')) {
+      return 'Invalid email or password';
+    }
+    if (error.message.includes('Email not confirmed')) {
+      return 'Please check your email and click the confirmation link';
+    }
+    if (error.message.includes('User already registered')) {
+      return 'An account with this email already exists';
+    }
+    if (error.message.includes('Password should be at least')) {
+      return 'Password must be at least 6 characters long';
+    }
+
+    // Return the original message if it's user-friendly
+    if (error.message.length < 100) {
+      return error.message;
+    }
+  }
+
+  return 'An unexpected error occurred. Please try again.';
 }
 
 /**
  * Wraps async operations with error handling
  */
 export async function executeWithErrorHandling<T>(
-  operation: () => Promise<{ data: T | null; error: any }>
+  operation: () => Promise<{ data: T | null; error: unknown }>
 ): Promise<{ data: T; error: null } | { data: null; error: string }> {
   try {
     const result = await operation();
@@ -165,11 +186,14 @@ export async function retryOperation<T>(
  * Validates form data and throws ValidationError if invalid
  */
 export function validateRequired(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   requiredFields: string[]
 ): void {
   for (const field of requiredFields) {
-    if (!data[field] || (typeof data[field] === 'string' && !data[field].trim())) {
+    if (
+      !data[field] ||
+      (typeof data[field] === 'string' && !data[field].trim())
+    ) {
       throw new ValidationError(`${field} is required`, field, data[field]);
     }
   }
@@ -179,7 +203,7 @@ export function validateRequired(
  * Validates numeric fields
  */
 export function validateNumeric(
-  value: any,
+  value: unknown,
   fieldName: string,
   options?: {
     min?: number;
@@ -190,7 +214,11 @@ export function validateNumeric(
   const num = Number(value);
 
   if (isNaN(num)) {
-    throw new ValidationError(`${fieldName} must be a valid number`, fieldName, value);
+    throw new ValidationError(
+      `${fieldName} must be a valid number`,
+      fieldName,
+      value
+    );
   }
 
   if (options?.min !== undefined && num < options.min) {
@@ -225,10 +253,10 @@ export function setupGlobalErrorHandling() {
   if (typeof window !== 'undefined') {
     window.addEventListener('unhandledrejection', event => {
       console.error('Unhandled promise rejection:', event.reason);
-      
+
       // Prevent the default browser behavior
       event.preventDefault();
-      
+
       // In production, send to error monitoring service
       if (process.env.NODE_ENV === 'production') {
         // TODO: Send to error monitoring service
@@ -241,7 +269,7 @@ export function setupGlobalErrorHandling() {
 
     window.addEventListener('error', event => {
       console.error('Global error:', event.error);
-      
+
       // In production, send to error monitoring service
       if (process.env.NODE_ENV === 'production') {
         // TODO: Send to error monitoring service

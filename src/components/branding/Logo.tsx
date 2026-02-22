@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box } from '@mui/material';
 import { IMSLogo } from './IMSLogo';
 
 export interface LogoProps {
@@ -14,20 +15,15 @@ export interface LogoProps {
 export function Logo({
   variant = 'auto',
   size = 'medium',
-  showFullName,
   responsive = true,
   onClick,
-}: LogoProps) {
+}: Omit<LogoProps, 'showFullName'>) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Determine if we should show mobile or desktop variant
   const shouldShowMobile =
     variant === 'mobile' || (variant === 'auto' && responsive && isMobile);
-  const shouldShowFullName = showFullName ?? !shouldShowMobile;
-
-  // Always show some text - either full name or IMS
-  const shouldShowIMS = !shouldShowFullName;
 
   const handleClick = () => {
     if (onClick) {
@@ -40,7 +36,7 @@ export function Logo({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1,
+        gap: 1.5,
         cursor: onClick ? 'pointer' : 'default',
         userSelect: 'none',
       }}
@@ -48,68 +44,33 @@ export function Logo({
     >
       <IMSLogo size={size} />
 
-      {shouldShowFullName && (
+      {/* Desktop view - show full "Inventory Management System" */}
+      {!shouldShowMobile && (
         <Typography
           variant={size === 'large' ? 'h4' : size === 'small' ? 'body1' : 'h6'}
           component="span"
           sx={{
             fontWeight: 600,
-            display: { xs: 'none', sm: 'block' },
+            color: 'text.primary',
+            letterSpacing: '-0.025em',
           }}
         >
-          <Box
-            component="span"
-            sx={{
-              color: 'primary.main',
-              fontWeight: 'bold',
-              fontSize: '1.1em',
-            }}
-          >
-            I
-          </Box>
-          nventory{' '}
-          <Box
-            component="span"
-            sx={{
-              color: 'secondary.main',
-              fontWeight: 'bold',
-              fontSize: '1.1em',
-            }}
-          >
-            M
-          </Box>
-          anagement{' '}
-          <Box
-            component="span"
-            sx={{
-              color: 'success.main',
-              fontWeight: 'bold',
-              fontSize: '1.1em',
-            }}
-          >
-            S
-          </Box>
-          ystem
+          Inventory Management System
         </Typography>
       )}
 
-      {shouldShowIMS && (
+      {/* Mobile view - show just "Inventory" */}
+      {shouldShowMobile && (
         <Typography
-          variant={size === 'large' ? 'h4' : size === 'small' ? 'body1' : 'h6'}
+          variant={size === 'large' ? 'h5' : size === 'small' ? 'body1' : 'h6'}
           component="span"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
+            color: 'text.primary',
+            letterSpacing: '-0.025em',
           }}
         >
-          <Box component="span" sx={{ color: 'primary.main' }}>
-            I
-          </Box>
-          <Box component="span" sx={{ color: 'secondary.main' }}>
-            M
-          </Box>
-          <Box component="span" sx={{ color: 'success.main' }}>
-            S
-          </Box>
+          Inventory
         </Typography>
       )}
     </Box>

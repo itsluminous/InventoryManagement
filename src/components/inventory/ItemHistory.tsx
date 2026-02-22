@@ -17,7 +17,11 @@ import {
   Stack,
   LinearProgress,
 } from '@mui/material';
-import { Add as AddIcon, Remove as RemoveIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  ExpandMore as ExpandMoreIcon,
+} from '@mui/icons-material';
 import { InventoryTransactionWithItem } from '@/lib/types/inventory';
 
 interface ItemHistoryProps {
@@ -90,7 +94,11 @@ export function ItemHistory({
               Total Value: ₹{totalValue.toFixed(2)}
             </Typography>
             {totalCount > 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
                 Showing {transactions.length} of {totalCount} transactions
               </Typography>
             )}
@@ -125,9 +133,7 @@ export function ItemHistory({
         </Box>
 
         {/* Loading indicator for pagination */}
-        {loading && transactions.length > 0 && (
-          <LinearProgress />
-        )}
+        {loading && transactions.length > 0 && <LinearProgress />}
 
         {transactions.length === 0 && !loading ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>

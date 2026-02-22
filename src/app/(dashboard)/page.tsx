@@ -71,9 +71,6 @@ export default function HomePage() {
         <Typography variant="h4" component="h1" gutterBottom>
           Current Inventory
         </Typography>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          Hello, {user?.user_metadata?.full_name || user?.email}!
-        </Typography>
       </Box>
 
       <InventoryList

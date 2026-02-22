@@ -1,14 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Alert,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Button, Paper, Alert, Stack } from '@mui/material';
 import { Refresh as RefreshIcon, Home as HomeIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 
@@ -45,7 +38,7 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -83,10 +76,7 @@ export class ErrorBoundary extends React.Component<
       }
 
       return (
-        <ErrorFallback
-          error={this.state.error!}
-          retry={this.handleRetry}
-        />
+        <ErrorFallback error={this.state.error!} retry={this.handleRetry} />
       );
     }
 
@@ -128,14 +118,18 @@ function ErrorFallback({ error, retry }: ErrorFallbackProps) {
         <Typography variant="h4" color="error" gutterBottom>
           Something went wrong
         </Typography>
-        
+
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           We encountered an unexpected error. Please try refreshing the page or
           return to the home page.
         </Typography>
 
         <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-          <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Typography
+            variant="body2"
+            component="pre"
+            sx={{ whiteSpace: 'pre-wrap' }}
+          >
             {error.message}
           </Typography>
         </Alert>

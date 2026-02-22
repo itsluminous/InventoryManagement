@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme as useCustomTheme } from '@/lib/theme/ThemeProvider';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { Logo } from '@/components/branding';
+import { SyncStatus } from './SyncStatus';
 
 export function Navigation() {
   const { mode, toggleColorMode } = useCustomTheme();
@@ -73,6 +74,8 @@ export function Navigation() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SyncStatus />
+
           <IconButton
             onClick={toggleColorMode}
             color="inherit"
@@ -112,12 +115,25 @@ export function Navigation() {
             }}
           >
             {/* User info */}
-            <MenuItem disabled>
+            <MenuItem
+              disabled
+              sx={{
+                '&.Mui-disabled': {
+                  opacity: 1, // Override default disabled opacity
+                  '& .MuiListItemIcon-root': {
+                    color: 'text.primary', // Use primary text color instead of disabled color
+                  },
+                  '& .MuiListItemText-root .MuiTypography-root': {
+                    color: 'text.primary', // Use primary text color for better visibility
+                  },
+                },
+              }}
+            >
               <ListItemIcon>
                 <AccountCircle />
               </ListItemIcon>
               <ListItemText>
-                <Typography variant="body2" color="text.secondary" noWrap>
+                <Typography variant="body2" noWrap>
                   {user?.user_metadata?.full_name || user?.email}
                 </Typography>
               </ListItemText>

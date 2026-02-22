@@ -153,8 +153,6 @@ const transactionListGenerator = fc.array(transactionGenerator, {
 
 describe('Property 10: Report Calculation Accuracy', () => {
   /**
-   * **Validates: Requirements 10.3, 10.5**
-   *
    * For any selected time period and item set, the reporting system should
    * accurately calculate incoming transactions, outgoing transactions, and net expenses,
    * with net expense always equaling incoming minus outgoing costs.
@@ -286,8 +284,6 @@ describe('Property 10: Report Calculation Accuracy', () => {
 
 describe('Property 11: Real-time Data Synchronization', () => {
   /**
-   * **Validates: Requirements 11.1**
-   *
    * For any data modification, the system should immediately update all relevant
    * displays and maintain consistency between the database state and UI state
    * across all components.
