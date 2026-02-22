@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { MasterItem } from '@/lib/types/inventory';
@@ -10,7 +10,9 @@ export function useMasterItems() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthContext();
-  const supabase = createClient();
+
+  // Memoize the Supabase client to prevent unnecessary re-renders
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchMasterItems = useCallback(async () => {
     if (!user) return;

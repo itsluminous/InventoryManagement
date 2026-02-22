@@ -63,3 +63,30 @@ export interface FIFORemovalResult {
   weightedAveragePrice?: number;
   batchesAffected?: number;
 }
+
+// Reporting types
+export interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+export interface ReportData {
+  period: string;
+  incoming_quantity: number;
+  incoming_value: number;
+  outgoing_quantity: number;
+  outgoing_value: number;
+  net_expense: number;
+}
+
+export interface TrendData {
+  week: string;
+  expense: number;
+  items: { [itemName: string]: number };
+}
+
+export interface ReportFilters {
+  dateRange: DateRange;
+  selectedItems: string[];
+  period: 'day' | 'week' | 'month' | 'quarter' | 'year';
+}

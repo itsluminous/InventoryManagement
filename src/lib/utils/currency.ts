@@ -57,8 +57,14 @@ export function formatCurrency(
  */
 function formatIndianNumbering(amount: number, decimalPlaces: number): string {
   const parts = amount.toFixed(decimalPlaces).split('.');
-  const integerPart = parts[0];
+  let integerPart = parts[0];
   const decimalPart = parts[1];
+
+  // Handle negative sign separately
+  const isNegative = integerPart.startsWith('-');
+  if (isNegative) {
+    integerPart = integerPart.substring(1); // Remove the negative sign
+  }
 
   // Apply Indian numbering pattern: first comma after 3 digits, then every 2 digits
   let formatted = '';
@@ -70,6 +76,11 @@ function formatIndianNumbering(amount: number, decimalPlaces: number): string {
       formatted = ',' + formatted;
     }
     formatted = reversed[i] + formatted;
+  }
+
+  // Add back the negative sign if needed
+  if (isNegative) {
+    formatted = '-' + formatted;
   }
 
   // Maintain exactly 2 decimal places for currency precision

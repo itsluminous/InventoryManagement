@@ -24,6 +24,13 @@ describe('Currency Utils', () => {
       expect(formatCurrency(NaN)).toBe('₹0.00');
       expect(formatCurrency(Infinity)).toBe('₹0.00');
     });
+
+    it('handles negative numbers correctly', () => {
+      expect(formatCurrency(-100)).toBe('₹-100.00');
+      expect(formatCurrency(-1000)).toBe('₹-1,000.00');
+      expect(formatCurrency(-100000)).toBe('₹-1,00,000.00');
+      expect(formatCurrency(-1234567)).toBe('₹-12,34,567.00');
+    });
   });
 
   describe('parseCurrency', () => {
