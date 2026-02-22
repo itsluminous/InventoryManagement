@@ -241,20 +241,6 @@ export function RemoveInventoryForm({
               </Alert>
             )}
 
-            {/* FIFO Cost Estimation */}
-            {selectedItem && isQuantityValid && !isQuantityExceeded && (
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-                <Typography variant="subtitle2" color="warning.contrastText">
-                  FIFO Removal Information
-                </Typography>
-                <Typography variant="body2" color="warning.contrastText">
-                  This removal will use the oldest inventory first (FIFO
-                  method). The actual cost will be calculated based on the
-                  original purchase prices.
-                </Typography>
-              </Box>
-            )}
-
             <Divider />
 
             {/* Notes Input */}
