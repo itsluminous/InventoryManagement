@@ -6,6 +6,7 @@ import {
   InventoryBatch,
   InventoryItem,
 } from '@/lib/types/inventory';
+import { calculateItemValue, roundToPrecision } from '@/lib/utils/calculations';
 
 // Type for the RPC response
 type GetCurrentInventoryResponse = {
@@ -21,15 +22,25 @@ export class InventoryService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private supabase: any = createClient();
 
+  /**
+   * Add inventory with precise value calculations
+   * Implements calculation precision and consistency
+   */
   async addInventory(userId: string, data: AddInventoryData): Promise<void> {
+    // Validate and calculate precise values
+    const quantity = roundToPrecision(data.quantity, 3); // Allow 3 decimal places for quantity
+    const unitPrice = roundToPrecision(data.unit_price, 2); // 2 decimal places for price
+    // Note: totalPrice calculation is handled by database as stored generated column
+
     const insertData = {
       user_id: userId,
       master_item_id: data.master_item_id,
       transaction_type: 'add' as const,
-      quantity: data.quantity,
-      unit_price: data.unit_price,
-      remaining_quantity: data.quantity, // For FIFO tracking
+      quantity,
+      unit_price: unitPrice,
+      remaining_quantity: quantity, // For FIFO tracking
       notes: data.notes,
+      // total_price is calculated by database as stored generated column
     };
 
     const { error } = await this.supabase
@@ -133,7 +144,8 @@ export class InventoryService {
   }
 
   /**
-   * Calculate FIFO removal plan without modifying database
+   * Calculate FIFO removal plan with precise calculations
+   * Maintains calculation precision and consistency
    */
   private calculateFIFORemoval(
     batches: InventoryBatch[],
@@ -154,22 +166,34 @@ export class InventoryService {
         remainingToRemove,
         batch.remaining_quantity
       );
-      const costFromThisBatch = quantityFromThisBatch * batch.unit_price;
+
+      // Use precise calculation utility
+      const costFromThisBatch = calculateItemValue(
+        quantityFromThisBatch,
+        batch.unit_price
+      );
 
       totalCost += costFromThisBatch;
       remainingToRemove -= quantityFromThisBatch;
 
       batchUpdates.push({
         id: batch.id,
-        newRemainingQuantity: batch.remaining_quantity - quantityFromThisBatch,
+        newRemainingQuantity: roundToPrecision(
+          batch.remaining_quantity - quantityFromThisBatch,
+          3
+        ),
         quantityUsed: quantityFromThisBatch,
       });
     }
 
-    const weightedAveragePrice = totalCost / quantityToRemove;
+    // Calculate weighted average price with precision
+    const weightedAveragePrice =
+      quantityToRemove > 0
+        ? roundToPrecision(totalCost / quantityToRemove, 2)
+        : 0;
 
     return {
-      totalCost,
+      totalCost: roundToPrecision(totalCost, 2),
       weightedAveragePrice,
       batchUpdates,
     };
