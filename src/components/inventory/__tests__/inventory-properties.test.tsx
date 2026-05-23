@@ -72,13 +72,32 @@ describe('Property 3: Alphabetical Sorting Consistency', () => {
       fc.property(
         fc.array(inventoryItemArbitrary, { minLength: 3, maxLength: 8 }),
         originalItems => {
-          // Create shuffled version of the same items
-          const shuffledItems = [...originalItems].sort(
-            () => Math.random() - 0.5
-          );
+          // Filter out items with names that would be considered equal in case-insensitive comparison
+          // to avoid the instability issue with equal elements in sorting
+          const uniqueItems = originalItems.filter((item, index, arr) => {
+            return !arr.slice(0, index).some(
+              prevItem =>
+                prevItem.name.localeCompare(item.name, undefined, {
+                  sensitivity: 'base',
+                }) === 0
+            );
+          });
+
+          // Skip test if we don't have enough unique items
+          if (uniqueItems.length < 2) return;
+
+          // Create shuffled version using Fisher-Yates shuffle
+          const shuffledItems = [...uniqueItems];
+          for (let i = shuffledItems.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledItems[i], shuffledItems[j]] = [
+              shuffledItems[j],
+              shuffledItems[i],
+            ];
+          }
 
           // Sort both arrays
-          const sortedOriginal = [...originalItems].sort((a, b) =>
+          const sortedOriginal = [...uniqueItems].sort((a, b) =>
             a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
           );
           const sortedShuffled = [...shuffledItems].sort((a, b) =>
