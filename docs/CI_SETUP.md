@@ -42,6 +42,24 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+### Current CI Pipeline Status
+
+The CI pipeline currently includes:
+
+✅ **Test Job:**
+- ESLint code linting
+- TypeScript type checking
+- Prettier formatting check
+- Unit tests with coverage
+- Application build
+
+❌ **E2E Job:** (Temporarily disabled)
+- End-to-end tests are disabled until proper test scenarios are written
+- Will be re-enabled once E2E tests are implemented
+
+✅ **Lighthouse Job:** (PR only)
+- Performance auditing on pull requests
+
 ### Troubleshooting
 
 If the build still fails:
@@ -58,5 +76,8 @@ The following changes were made to fix the CI build issues:
 2. **Enhanced Supabase clients** to handle missing environment variables gracefully
 3. **Added fallback values** in Next.js config for build-time
 4. **Improved error handling** for missing credentials
+5. **Updated deprecated GitHub Actions** (upload-artifact v3→v4, codecov-action v3→v4)
+6. **Fixed test coverage thresholds** and excluded Next.js files from coverage
+7. **Fixed property-based test** that was causing instability with case-insensitive sorting
 
 These changes ensure the build works both locally and in CI environments.
