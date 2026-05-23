@@ -169,12 +169,14 @@ The application uses four main tables:
 ### New Features Added
 
 #### Image Management System
+
 - **Client-side Image Processing**: Automatic compression to 320px width and WebP conversion
 - **Image Cropping**: Professional cropping interface using react-easy-crop library
 - **Supabase Storage Integration**: Secure file storage with Row Level Security
 - **Image Preview**: Click-to-expand image previews on all pages
 
 #### Smart Duplicate Detection
+
 - **Fuzzy Matching Algorithm**: Advanced similarity detection using Levenshtein distance
 - **Multi-algorithm Scoring**: Combines substring, starts-with, word-level, and normalized matching
 - **Position-independent Matching**: Detects similar items regardless of word order (e.g., "steel balti" vs "balti steel")
@@ -182,6 +184,7 @@ The application uses four main tables:
 - **Real-time Feedback**: Triggers after 3+ characters with 40% similarity threshold
 
 #### Enhanced Navigation
+
 - **Contextual Icons**: Shows relevant navigation based on current page
 - **Profile Menu Integration**: Dark mode toggle moved to profile menu
 - **Smart Layout**: Masterlist icon on inventory page, home icon on masterlist page
