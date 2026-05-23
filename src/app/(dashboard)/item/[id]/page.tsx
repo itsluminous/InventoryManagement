@@ -128,6 +128,7 @@ export default function ItemDetailPage() {
       <ItemHistory
         itemName={itemDetails?.name}
         itemUnit={itemDetails?.unit}
+        itemImage={itemDetails?.image_url}
         transactions={transactions}
         loading={loading}
         error={error}

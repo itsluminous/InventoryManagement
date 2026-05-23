@@ -40,6 +40,7 @@ export function useInventory() {
             master_item_id: string;
             name: string;
             unit: string;
+            image_url: string | null;
             current_quantity: number;
             total_value: number;
             last_transaction_date: string | null;
@@ -47,6 +48,7 @@ export function useInventory() {
             master_item_id: item.master_item_id,
             name: item.name,
             unit: item.unit,
+            image_url: item.image_url,
             current_quantity: item.current_quantity,
             total_value: item.total_value,
             last_transaction_date: item.last_transaction_date,

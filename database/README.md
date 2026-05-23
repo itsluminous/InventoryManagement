@@ -1,103 +1,91 @@
-# Database Setup
+# Database Migrations
 
-This directory contains the database schema and migration files for the Inventory Management System.
+This directory contains SQL migration files for the inventory management system.
 
-## Database Schema Overview
+## Migration Files
 
-The database consists of three main tables:
+### 001_initial_schema.sql
 
-### 1. `profiles`
+- Creates the initial database schema
+- Sets up tables: profiles, master_items, inventory_transactions
+- Configures RLS policies and helper functions
+- Creates indexes for performance
 
-- Stores user account information
-- Linked to Supabase `auth.users` table
-- Contains email, full name, and business name
+### 002_enhanced_rls_policies.sql
 
-### 2. `master_items`
+- Enhanced Row Level Security policies
+- Additional security improvements
 
-- Master list of inventory items
-- Each item has a name and unit (e.g., "Rice" - "kg")
-- Unique constraint on (user_id, name) to prevent duplicates
+### 003_add_image_support.sql
 
-### 3. `inventory_transactions`
+- Adds image_url column to master_items table
+- Creates Supabase Storage bucket for item images
+- Sets up RLS policies for image storage
+- Updates get_current_inventory function to include image_url
 
-- Records all inventory movements (add/remove)
-- Implements FIFO cost tracking with `remaining_quantity`
-- Contains quantity, unit price, and calculated total price
+## Running Migrations
 
-## Key Features
+### Option 1: Supabase Dashboard
 
-### Row Level Security (RLS)
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Copy and paste the migration content
+4. Execute the SQL
 
-- All tables have RLS enabled
-- Users can only access their own data
-- Policies enforce data isolation at the database level
+### Option 2: Supabase CLI
 
-### Performance Indexes
-
-- Optimized indexes for common query patterns
-- Special FIFO index for efficient cost calculations
-- User-based and date-based indexes for fast filtering
-
-### Business Logic Functions
-
-- `get_current_inventory(user_id)` - Returns current inventory summary
-- `can_delete_master_item(item_id, user_id)` - Checks deletion safety
-- `handle_new_user()` - Auto-creates profile on signup
-
-### Automatic Features
-
-- Auto-updating timestamps on profile and master item changes
-- Automatic profile creation when users sign up
-- Computed `total_price` column (quantity × unit_price)
-
-## Setup Instructions
-
-1. **Open Supabase Dashboard**
-   - Go to your project dashboard at [supabase.com](https://supabase.com)
-   - Navigate to the SQL Editor
-
-2. **Run the Migration**
-   - Copy the contents of `migrations/001_initial_schema.sql`
-   - Paste into the SQL Editor
-   - Click "Run" to execute the migration
-
-3. **Verify Setup**
-   - Check the "Table Editor" to see the created tables
-   - Verify RLS is enabled on all tables
-   - Test the helper functions in the SQL Editor
-
-## Environment Variables
-
-Make sure your `.env.local` file contains:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```bash
+# If you have Supabase CLI installed
+supabase db reset
+# or apply specific migration
+supabase db push
 ```
 
-## Data Model Relationships
+### Option 3: Manual SQL Execution
 
-```
-auth.users (Supabase)
-    ↓ (1:1)
-profiles
-    ↓ (1:many)
-master_items
-    ↓ (1:many)
-inventory_transactions
-```
+Connect to your PostgreSQL database and execute the migration files in order.
 
-## FIFO Implementation
+## Storage Setup
 
-The FIFO (First In, First Out) inventory costing is implemented using:
+After running migration 003, you need to ensure the storage bucket is properly configured:
 
-- `remaining_quantity` field tracks unused inventory from each "add" transaction
-- Specialized index `idx_inventory_transactions_fifo` for efficient FIFO queries
-- Business logic in the application layer processes FIFO removals
+1. **Bucket Creation**: The migration creates an `item-images` bucket
+2. **RLS Policies**: Policies are set up for authenticated users to upload/view/delete their own images
+3. **File Limits**: 5MB file size limit with JPEG, PNG, WebP support
+4. **Public Access**: Images are publicly viewable once uploaded
 
-## Security Considerations
+## Image Upload Features
 
-- All tables use Row Level Security (RLS)
-- Foreign key constraints ensure data integrity
-- Check constraints validate business rules (positive quantities, valid transaction types)
-- Functions use `SECURITY DEFINER` for controlled access
+The image upload system includes:
+
+- **Client-side compression**: Images are resized to 320px max dimension
+- **WebP conversion**: Automatic conversion to WebP format for better compression
+- **File validation**: Type and size validation before upload
+- **Unique naming**: Files are stored with user ID prefix and timestamp
+- **Cleanup**: Old images are automatically deleted when replaced
+
+## Troubleshooting
+
+### Storage Bucket Issues
+
+If you encounter storage issues:
+
+1. Check if the bucket exists in Supabase Storage
+2. Verify RLS policies are applied
+3. Ensure your Supabase project has storage enabled
+
+### Permission Issues
+
+If users can't upload images:
+
+1. Verify the user is authenticated
+2. Check RLS policies on storage.objects
+3. Ensure the bucket is public for read access
+
+### Migration Errors
+
+If migrations fail:
+
+1. Check if previous migrations were applied
+2. Verify database permissions
+3. Look for conflicting table/function names

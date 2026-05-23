@@ -41,6 +41,7 @@ export type CurrentInventoryItem = {
   master_item_id: string;
   name: string;
   unit: string;
+  image_url: string | null;
   current_quantity: number;
   total_value: number;
   last_transaction_date: string | null;

@@ -25,10 +25,12 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { InventoryTransactionWithItem } from '@/lib/types/inventory';
+import { ImagePreview } from '@/components/ui/ImagePreview';
 
 interface ItemHistoryProps {
   itemName?: string;
   itemUnit?: string;
+  itemImage?: string | null;
   transactions: InventoryTransactionWithItem[];
   loading?: boolean;
   error?: string | null;
@@ -42,6 +44,7 @@ interface ItemHistoryProps {
 export function ItemHistory({
   itemName,
   itemUnit,
+  itemImage,
   transactions,
   loading,
   error,
@@ -87,27 +90,30 @@ export function ItemHistory({
           flexWrap="wrap"
           gap={2}
         >
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              {itemName || 'Item History'}
-            </Typography>
-            {itemUnit && (
-              <Typography variant="body2" color="text.secondary">
-                Unit: {itemUnit}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <ImagePreview src={itemImage} alt={itemName || 'Item'} size={64} />
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                {itemName || 'Item History'}
               </Typography>
-            )}
-            <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-              Total Value: ₹{totalValue.toFixed(2)}
-            </Typography>
-            {totalCount > 0 && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5 }}
-              >
-                Showing {transactions.length} of {totalCount} transactions
+              {itemUnit && (
+                <Typography variant="body2" color="text.secondary">
+                  Unit: {itemUnit}
+                </Typography>
+              )}
+              <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
+                Total Value: ₹{totalValue.toFixed(2)}
               </Typography>
-            )}
+              {totalCount > 0 && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
+                  Showing {transactions.length} of {totalCount} transactions
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Stack direction="row" spacing={2}>
             <Button

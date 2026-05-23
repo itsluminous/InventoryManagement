@@ -22,7 +22,7 @@ import {
   Home,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTheme as useCustomTheme } from '@/lib/theme/ThemeProvider';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { Logo } from '@/components/branding';
@@ -32,6 +32,7 @@ export function Navigation() {
   const { mode, toggleColorMode } = useCustomTheme();
   const { user, signOut } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -61,6 +62,25 @@ export function Navigation() {
     router.push('/');
   };
 
+  // Determine which contextual navigation icon to show
+  const getContextualNavigation = () => {
+    if (pathname === '/masterlist') {
+      return {
+        icon: <Home />,
+        label: 'Go to Inventory',
+        path: '/',
+      };
+    } else {
+      return {
+        icon: <ListIcon />,
+        label: 'Go to Masterlist',
+        path: '/masterlist',
+      };
+    }
+  };
+
+  const contextualNav = getContextualNavigation();
+
   return (
     <AppBar position="static" color="primary" elevation={2}>
       <Toolbar>
@@ -76,13 +96,15 @@ export function Navigation() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <SyncStatus />
 
+          {/* Contextual Navigation Icon */}
           <IconButton
-            onClick={toggleColorMode}
+            onClick={() => router.push(contextualNav.path)}
             color="inherit"
             size="large"
-            aria-label="toggle theme"
+            aria-label={contextualNav.label}
+            title={contextualNav.label}
           >
-            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            {contextualNav.icon}
           </IconButton>
 
           <IconButton
@@ -141,26 +163,22 @@ export function Navigation() {
 
             <Divider />
 
-            {/* Navigation items */}
-            <MenuItem onClick={() => handleNavigation('/')}>
+            {/* Theme Toggle */}
+            <MenuItem onClick={toggleColorMode}>
               <ListItemIcon>
-                <Home />
+                {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
               </ListItemIcon>
-              <ListItemText>Home</ListItemText>
+              <ListItemText>
+                {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </ListItemText>
             </MenuItem>
 
+            {/* Reports - kept in profile menu */}
             <MenuItem onClick={() => handleNavigation('/reports')}>
               <ListItemIcon>
                 <Assessment />
               </ListItemIcon>
               <ListItemText>Reports</ListItemText>
-            </MenuItem>
-
-            <MenuItem onClick={() => handleNavigation('/masterlist')}>
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText>Masterlist</ListItemText>
             </MenuItem>
 
             <Divider />

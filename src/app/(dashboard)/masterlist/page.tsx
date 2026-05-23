@@ -35,10 +35,15 @@ import {
 } from '@mui/icons-material';
 import { useAuthContext } from '@/lib/auth/AuthProvider';
 import { createDatabaseService, MasterItem } from '@/lib/database';
+import { ImageUpload } from '@/components/ui/ImageUpload';
+import { ImagePreview } from '@/components/ui/ImagePreview';
+import { SimilarItemsAlert } from '@/components/ui/SimilarItemsAlert';
+import { findSimilarItems, FuzzyMatchResult } from '@/lib/utils/fuzzyMatch';
 
 interface MasterItemFormData {
   name: string;
   unit: string;
+  image_url: string | null;
 }
 
 // Predefined unit options organized by category
@@ -84,9 +89,39 @@ export default function MasterlistPage() {
   const [formData, setFormData] = useState<MasterItemFormData>({
     name: '',
     unit: '',
+    image_url: null,
   });
   const [formErrors, setFormErrors] = useState<Partial<MasterItemFormData>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [similarItems, setSimilarItems] = useState<
+    FuzzyMatchResult<MasterItem>[]
+  >([]);
+
+  // Handle form data changes with fuzzy matching
+  const handleNameChange = (name: string) => {
+    setFormData({ ...formData, name });
+
+    // Only search for similar items when adding new items (not editing)
+    if (!editingItem && name.trim().length >= 3) {
+      const similar = findSimilarItems(name, masterItems, 0.4, 3);
+      setSimilarItems(similar);
+    } else {
+      setSimilarItems([]);
+    }
+  };
+
+  // Handle clicking on similar item
+  const handleSimilarItemClick = (item: MasterItem) => {
+    // Close current dialog and open edit dialog for the similar item
+    setEditingItem(item);
+    setFormData({
+      name: item.name,
+      unit: item.unit,
+      image_url: item.image_url,
+    });
+    setSimilarItems([]);
+    // Dialog stays open, just switches to edit mode
+  };
 
   // Helper function to get unit display label
   const getUnitLabel = (unitValue: string): string => {
@@ -166,6 +201,7 @@ export default function MasterlistPage() {
           {
             name: formData.name.trim(),
             unit: formData.unit.trim(),
+            image_url: formData.image_url,
             updated_at: new Date().toISOString(),
           }
         );
@@ -183,6 +219,7 @@ export default function MasterlistPage() {
           user_id: user.id,
           name: formData.name.trim(),
           unit: formData.unit.trim(),
+          image_url: formData.image_url,
         });
 
         if (result.error) {
@@ -239,20 +276,34 @@ export default function MasterlistPage() {
   const handleOpenDialog = (item?: MasterItem) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ name: item.name, unit: item.unit });
+      setFormData({
+        name: item.name,
+        unit: item.unit,
+        image_url: item.image_url,
+      });
     } else {
       setEditingItem(null);
-      setFormData({ name: '', unit: '' });
+      setFormData({
+        name: '',
+        unit: '',
+        image_url: null,
+      });
     }
     setFormErrors({});
+    setSimilarItems([]);
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingItem(null);
-    setFormData({ name: '', unit: '' });
+    setFormData({
+      name: '',
+      unit: '',
+      image_url: null,
+    });
     setFormErrors({});
+    setSimilarItems([]);
   };
 
   // Clear messages after 5 seconds
@@ -322,10 +373,24 @@ export default function MasterlistPage() {
               {masterItems.map((item, index) => (
                 <Box key={item.id}>
                   <ListItem>
-                    <ListItemText
-                      primary={item.name}
-                      secondary={`Unit: ${getUnitLabel(item.unit)}`}
-                    />
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        flex: 1,
+                      }}
+                    >
+                      <ImagePreview
+                        src={item.image_url}
+                        alt={item.name}
+                        size={48}
+                      />
+                      <ListItemText
+                        primary={item.name}
+                        secondary={`Unit: ${getUnitLabel(item.unit)}`}
+                      />
+                    </Box>
                     <ListItemSecondaryAction>
                       <IconButton
                         edge="end"
@@ -374,6 +439,21 @@ export default function MasterlistPage() {
           {editingItem ? 'Edit Master Item' : 'Add Master Item'}
         </DialogTitle>
         <DialogContent>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Item Image
+            </Typography>
+            <ImageUpload
+              value={formData.image_url}
+              onChange={imageUrl =>
+                setFormData({ ...formData, image_url: imageUrl })
+              }
+              userId={user?.id || ''}
+              itemId={editingItem?.id}
+              disabled={submitting}
+            />
+          </Box>
+
           <TextField
             autoFocus
             margin="dense"
@@ -381,10 +461,16 @@ export default function MasterlistPage() {
             fullWidth
             variant="outlined"
             value={formData.name}
-            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            onChange={e => handleNameChange(e.target.value)}
             error={!!formErrors.name}
             helperText={formErrors.name}
             sx={{ mb: 2 }}
+          />
+
+          {/* Similar Items Alert */}
+          <SimilarItemsAlert
+            similarItems={similarItems}
+            onItemClick={handleSimilarItemClick}
           />
           <FormControl
             fullWidth

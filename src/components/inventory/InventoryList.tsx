@@ -13,6 +13,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { InventoryItem } from '@/lib/types/inventory';
+import { ImagePreview } from '@/components/ui/ImagePreview';
 import {
   InventoryListSkeleton,
   StaggeredList,
@@ -77,33 +78,38 @@ export function InventoryList({
           },
         }}
       >
-        <ListItemText
-          primary={
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {item.name}: {item.current_quantity} {item.unit}
-            </Typography>
-          }
-          secondary={
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Total Value: ₹{item.total_value.toFixed(2)}
-                {!isMobile && item.last_transaction_date && (
-                  <>
-                    {' '}
-                    • Last Updated:{' '}
-                    {new Date(item.last_transaction_date).toLocaleDateString()}
-                  </>
-                )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+          <ImagePreview src={item.image_url} alt={item.name} size={48} />
+          <ListItemText
+            primary={
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {item.name}: {item.current_quantity} {item.unit}
               </Typography>
-              {isMobile && item.last_transaction_date && (
+            }
+            secondary={
+              <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Last Updated:{' '}
-                  {new Date(item.last_transaction_date).toLocaleDateString()}
+                  Total Value: ₹{item.total_value.toFixed(2)}
+                  {!isMobile && item.last_transaction_date && (
+                    <>
+                      {' '}
+                      • Last Updated:{' '}
+                      {new Date(
+                        item.last_transaction_date
+                      ).toLocaleDateString()}
+                    </>
+                  )}
                 </Typography>
-              )}
-            </Box>
-          }
-        />
+                {isMobile && item.last_transaction_date && (
+                  <Typography variant="body2" color="text.secondary">
+                    Last Updated:{' '}
+                    {new Date(item.last_transaction_date).toLocaleDateString()}
+                  </Typography>
+                )}
+              </Box>
+            }
+          />
+        </Box>
       </ListItemButton>
     </ListItem>
   ));

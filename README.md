@@ -6,19 +6,23 @@ A comprehensive inventory management system, featuring real-time tracking, FIFO 
 
 - **Real-time Inventory Tracking**: Track inventory items with live updates
 - **FIFO Cost Calculation**: Accurate cost tracking using First In, First Out method
-- **Master Data Management**: Manage item templates and units
+- **Master Data Management**: Manage item templates and units with image support
+- **Image Management**: Upload, crop, and compress item images with WebP conversion
+- **Smart Duplicate Detection**: Fuzzy matching to prevent duplicate items with intelligent similarity scoring
 - **Comprehensive Reporting**: Detailed reports with trend analysis
 - **PWA Support**: Works offline with native app-like experience
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Material Design**: Beautiful, intuitive interface following Material Design principles
 - **Multi-tenant**: Secure data isolation for multiple users
+- **Contextual Navigation**: Smart navigation that adapts based on current page
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14 with TypeScript and App Router
 - **UI Library**: Material-UI (MUI) v5 with custom theming
-- **Database**: Supabase (PostgreSQL with real-time capabilities)
+- **Database**: Supabase (PostgreSQL with real-time capabilities and file storage)
 - **Authentication**: Supabase Auth with Row Level Security
+- **Image Processing**: Client-side compression and WebP conversion with react-easy-crop
 - **PWA**: next-pwa with Workbox for service worker management
 - **Charts**: Recharts for data visualization
 - **Testing**: Jest, React Testing Library, Playwright
@@ -155,11 +159,32 @@ The application supports both light and dark themes with automatic system prefer
 
 ## 📊 Database Schema
 
-The application uses three main tables:
+The application uses four main tables:
 
 - **profiles**: User account information
-- **master_items**: Item templates with names and units
+- **master_items**: Item templates with names, units, and image URLs
 - **inventory_transactions**: All inventory movements with FIFO tracking
+- **Storage**: Supabase Storage bucket for item images with RLS policies
+
+### New Features Added
+
+#### Image Management System
+- **Client-side Image Processing**: Automatic compression to 320px width and WebP conversion
+- **Image Cropping**: Professional cropping interface using react-easy-crop library
+- **Supabase Storage Integration**: Secure file storage with Row Level Security
+- **Image Preview**: Click-to-expand image previews on all pages
+
+#### Smart Duplicate Detection
+- **Fuzzy Matching Algorithm**: Advanced similarity detection using Levenshtein distance
+- **Multi-algorithm Scoring**: Combines substring, starts-with, word-level, and normalized matching
+- **Position-independent Matching**: Detects similar items regardless of word order (e.g., "steel balti" vs "balti steel")
+- **Interactive Suggestions**: Clickable chips showing similar items with similarity scores
+- **Real-time Feedback**: Triggers after 3+ characters with 40% similarity threshold
+
+#### Enhanced Navigation
+- **Contextual Icons**: Shows relevant navigation based on current page
+- **Profile Menu Integration**: Dark mode toggle moved to profile menu
+- **Smart Layout**: Masterlist icon on inventory page, home icon on masterlist page
 
 ## 🚀 Deployment
 
