@@ -47,6 +47,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 The CI pipeline currently includes:
 
 ✅ **Test Job:**
+
 - ESLint code linting
 - TypeScript type checking
 - Prettier formatting check
@@ -54,10 +55,12 @@ The CI pipeline currently includes:
 - Application build
 
 ❌ **E2E Job:** (Temporarily disabled)
+
 - End-to-end tests are disabled until proper test scenarios are written
 - Will be re-enabled once E2E tests are implemented
 
 ✅ **Lighthouse Job:** (PR only)
+
 - Performance auditing on pull requests
 
 ### Troubleshooting
