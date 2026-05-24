@@ -20,8 +20,7 @@ import Resizer from 'react-image-file-resizer';
 
 interface ImageCropperProps {
   open: boolean;
-  imageSrc: string;
-  imageFile?: File; // Add file prop for PWA compatibility
+  imageFile: File; // Always require the file for mobile compatibility
   onCrop: (croppedBlob: Blob) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -30,7 +29,6 @@ interface ImageCropperProps {
 
 export function ImageCropper({
   open,
-  imageSrc,
   imageFile,
   onCrop,
   onCancel,
@@ -43,28 +41,37 @@ export function ImageCropper({
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [internalImageSrc, setInternalImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageLoading, setImageLoading] = useState(false);
 
-  // Create internal blob URL for PWA compatibility
+  // Convert file to data URL when dialog opens (more reliable than blob URLs on mobile)
   useEffect(() => {
     if (open && imageFile) {
-      // Use the file directly to create a fresh blob URL
-      const url = URL.createObjectURL(imageFile);
-      setInternalImageSrc(url);
+      setImageLoading(true);
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          setImageSrc(result);
+        }
+        setImageLoading(false);
+      };
+
+      reader.onerror = () => {
+        console.error('Failed to read file');
+        if (onError) onError('Failed to read image file');
+        setImageLoading(false);
+      };
+
+      reader.readAsDataURL(imageFile);
 
       return () => {
-        URL.revokeObjectURL(url);
+        setImageSrc('');
+        setImageLoading(false);
       };
-    } else if (open && imageSrc) {
-      // Fallback to provided imageSrc
-      setInternalImageSrc(imageSrc);
-    } else {
-      setInternalImageSrc('');
     }
-  }, [open, imageFile, imageSrc]);
-
-  // Use the internal image source or fallback to provided imageSrc
-  const displayImageSrc = internalImageSrc || imageSrc;
+  }, [open, imageFile, onError]);
 
   const handleCrop = async () => {
     if (!completedCrop || !imgRef.current) {
@@ -81,6 +88,12 @@ export function ImageCropper({
       if (!ctx) throw new Error('Could not get canvas context');
 
       const image = imgRef.current;
+
+      // Ensure image is loaded
+      if (!image.complete || image.naturalWidth === 0) {
+        throw new Error('Image not fully loaded');
+      }
+
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
 
@@ -103,7 +116,9 @@ export function ImageCropper({
       canvas.toBlob(
         blob => {
           if (!blob) {
-            if (onError) onError('Failed to create cropped image');
+            // Fallback: try to process the original file if cropping fails
+            console.warn('Canvas toBlob failed, using original file');
+            handleFallbackProcessing();
             return;
           }
 
@@ -126,10 +141,31 @@ export function ImageCropper({
       );
     } catch (error) {
       console.error('Error cropping image:', error);
+      // Fallback: try to process the original file
+      handleFallbackProcessing();
+    }
+  };
+
+  const handleFallbackProcessing = () => {
+    console.log('Using fallback processing for original file');
+    try {
+      // Process the original file directly with resizing
+      Resizer.imageFileResizer(
+        imageFile,
+        320, // maxWidth
+        320, // maxHeight
+        'WEBP', // format
+        80, // quality
+        0, // rotation
+        resizedBlob => {
+          onCrop(resizedBlob as Blob);
+        },
+        'blob'
+      );
+    } catch (fallbackError) {
+      console.error('Fallback processing failed:', fallbackError);
       if (onError) {
-        onError(
-          error instanceof Error ? error.message : 'Failed to crop image'
-        );
+        onError('Failed to process image. Please try a different image.');
       }
     }
   };
@@ -151,20 +187,55 @@ export function ImageCropper({
 
       <DialogContent sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 400 }}>
-          <ReactCrop
-            crop={crop}
-            onChange={setCrop}
-            onComplete={setCompletedCrop}
-            aspect={1}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              alt="Crop me"
-              src={displayImageSrc}
-              style={{ maxWidth: '100%', maxHeight: '400px' }}
-            />
-          </ReactCrop>
+          {imageLoading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 400,
+                flexDirection: 'column',
+                gap: 2,
+              }}
+            >
+              <CircularProgress />
+              <Typography>Loading image...</Typography>
+            </Box>
+          ) : imageSrc ? (
+            <ReactCrop
+              crop={crop}
+              onChange={setCrop}
+              onComplete={setCompletedCrop}
+              aspect={1}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={imgRef}
+                alt="Crop me"
+                src={imageSrc}
+                style={{ maxWidth: '100%', maxHeight: '400px' }}
+                onError={() => {
+                  console.error('Image failed to load');
+                  if (onError) onError('Failed to load image for cropping');
+                }}
+                onLoad={() => {
+                  // Image loaded successfully, we can enable cropping
+                  console.log('Image loaded successfully');
+                }}
+              />
+            </ReactCrop>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 400,
+              }}
+            >
+              <Typography>Preparing image...</Typography>
+            </Box>
+          )}
         </Box>
 
         {loading && (
@@ -179,10 +250,19 @@ export function ImageCropper({
         <Button onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
+        {isMobile && (
+          <Button
+            onClick={handleFallbackProcessing}
+            disabled={loading || imageLoading}
+            color="secondary"
+          >
+            Skip Crop
+          </Button>
+        )}
         <Button
           onClick={handleCrop}
           variant="contained"
-          disabled={loading || !completedCrop}
+          disabled={loading || !completedCrop || !imageSrc || imageLoading}
         >
           {loading ? 'Processing...' : 'Crop & Upload'}
         </Button>

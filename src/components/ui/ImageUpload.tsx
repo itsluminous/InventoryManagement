@@ -44,7 +44,6 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -65,16 +64,9 @@ export function ImageUpload({
 
     setError(null);
 
-    // Store the file and create object URL for the cropper
-    try {
-      const imageUrl = URL.createObjectURL(file);
-      setSelectedFile(file);
-      setSelectedImageSrc(imageUrl);
-      setShowCropper(true);
-    } catch (err) {
-      console.error('Failed to create object URL:', err);
-      setError('Failed to process image file. Please try again.');
-    }
+    // Store the file directly - no need to create blob URL here
+    setSelectedFile(file);
+    setShowCropper(true);
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
@@ -111,11 +103,7 @@ export function ImageUpload({
       setError('Failed to upload image');
     } finally {
       setUploading(false);
-      // Clean up object URL
-      if (selectedImageSrc) {
-        URL.revokeObjectURL(selectedImageSrc);
-      }
-      setSelectedImageSrc('');
+      // Clean up
       setSelectedFile(null);
       // Clear file input
       if (fileInputRef.current) {
@@ -128,11 +116,7 @@ export function ImageUpload({
     console.error('Crop error:', errorMessage);
     setError(errorMessage);
     setShowCropper(false);
-    // Clean up object URL
-    if (selectedImageSrc) {
-      URL.revokeObjectURL(selectedImageSrc);
-    }
-    setSelectedImageSrc('');
+    // Clean up
     setSelectedFile(null);
     // Clear file input
     if (fileInputRef.current) {
@@ -142,11 +126,7 @@ export function ImageUpload({
 
   const handleCropCancel = () => {
     setShowCropper(false);
-    // Clean up object URL
-    if (selectedImageSrc) {
-      URL.revokeObjectURL(selectedImageSrc);
-    }
-    setSelectedImageSrc('');
+    // Clean up
     setSelectedFile(null);
     // Clear file input
     if (fileInputRef.current) {
@@ -267,15 +247,16 @@ export function ImageUpload({
       />
 
       {/* Image Cropper Dialog */}
-      <ImageCropper
-        open={showCropper}
-        imageSrc={selectedImageSrc}
-        imageFile={selectedFile || undefined}
-        onCrop={handleCropComplete}
-        onCancel={handleCropCancel}
-        loading={uploading}
-        onError={handleCropError}
-      />
+      {selectedFile && (
+        <ImageCropper
+          open={showCropper}
+          imageFile={selectedFile}
+          onCrop={handleCropComplete}
+          onCancel={handleCropCancel}
+          loading={uploading}
+          onError={handleCropError}
+        />
+      )}
     </Box>
   );
 }
