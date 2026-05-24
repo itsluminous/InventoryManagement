@@ -73,6 +73,7 @@ export function ImageUpload({
   const handleCropComplete = async (croppedBlob: Blob) => {
     setShowCropper(false);
     setUploading(true);
+    setError(null); // Clear any previous errors
 
     try {
       // Delete existing image if present
@@ -94,6 +95,7 @@ export function ImageUpload({
         setError(result.error || 'Failed to upload image');
       }
     } catch (err) {
+      console.error('Upload error:', err);
       setError('Failed to upload image');
     } finally {
       setUploading(false);
@@ -104,6 +106,18 @@ export function ImageUpload({
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleCropError = (errorMessage: string) => {
+    setError(errorMessage);
+    setShowCropper(false);
+    // Clean up object URL
+    URL.revokeObjectURL(selectedImageSrc);
+    setSelectedImageSrc('');
+    // Clear file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -237,6 +251,8 @@ export function ImageUpload({
         onCrop={handleCropComplete}
         onCancel={handleCropCancel}
         aspectRatio={1} // Square crop for item images
+        loading={uploading}
+        onError={handleCropError}
       />
     </Box>
   );

@@ -12,6 +12,7 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from '@mui/material';
 import { Crop as CropIcon } from '@mui/icons-material';
 import Cropper, { Area, Point } from 'react-easy-crop';
@@ -22,6 +23,8 @@ interface ImageCropperProps {
   onCrop: (croppedBlob: Blob) => void;
   onCancel: () => void;
   aspectRatio?: number; // width/height ratio, 1 for square
+  loading?: boolean; // Add loading prop
+  onError?: (error: string) => void; // Add error callback
 }
 
 // Helper function to create cropped image
@@ -80,6 +83,8 @@ export function ImageCropper({
   onCrop,
   onCancel,
   aspectRatio = 1, // Default to square crop
+  loading = false,
+  onError,
 }: ImageCropperProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -89,7 +94,7 @@ export function ImageCropper({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const onCropComplete = useCallback(
-    (croppedArea: Area, croppedAreaPixels: Area) => {
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
       setCroppedAreaPixels(croppedAreaPixels);
     },
     []
@@ -103,8 +108,13 @@ export function ImageCropper({
       onCrop(croppedBlob);
     } catch (error) {
       console.error('Error cropping image:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to crop image';
+      if (onError) {
+        onError(errorMessage);
+      }
     }
-  }, [imageSrc, croppedAreaPixels, onCrop]);
+  }, [imageSrc, croppedAreaPixels, onCrop, onError]);
 
   return (
     <Dialog
@@ -153,6 +163,29 @@ export function ImageCropper({
               },
             }}
           />
+
+          {/* Loading Overlay */}
+          {loading && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                zIndex: 1000,
+              }}
+            >
+              <Box sx={{ textAlign: 'center', color: 'white' }}>
+                <CircularProgress size={48} sx={{ color: 'white', mb: 2 }} />
+                <Typography variant="body1">Processing image...</Typography>
+              </Box>
+            </Box>
+          )}
         </Box>
 
         {/* Controls */}
@@ -176,6 +209,7 @@ export function ImageCropper({
             max={3}
             step={0.1}
             onChange={(_, value) => setZoom(value as number)}
+            disabled={loading}
             sx={{
               color: 'white',
               '& .MuiSlider-thumb': {
@@ -193,9 +227,16 @@ export function ImageCropper({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleCrop} variant="contained">
-          Crop & Upload
+        <Button onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleCrop}
+          variant="contained"
+          disabled={loading || !croppedAreaPixels}
+          startIcon={loading ? <CircularProgress size={16} /> : undefined}
+        >
+          {loading ? 'Processing...' : 'Crop & Upload'}
         </Button>
       </DialogActions>
     </Dialog>
