@@ -49,18 +49,18 @@ describe('imageUpload', () => {
     });
 
     it('should return error for files that are too large', () => {
-      // Create a file larger than 5MB
-      const largeFile = new File(['x'.repeat(6 * 1024 * 1024)], 'large.jpg', {
+      // Create a file larger than 10MB
+      const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.jpg', {
         type: 'image/jpeg',
       });
       expect(validateImageFile(largeFile)).toBe(
-        'Image size must be less than 5MB'
+        'Image size must be less than 10MB'
       );
     });
 
     it('should return null for files at the size limit', () => {
-      // Create a file exactly 5MB
-      const limitFile = new File(['x'.repeat(5 * 1024 * 1024)], 'limit.jpg', {
+      // Create a file exactly 10MB
+      const limitFile = new File(['x'.repeat(10 * 1024 * 1024)], 'limit.jpg', {
         type: 'image/jpeg',
       });
       expect(validateImageFile(limitFile)).toBeNull();
@@ -86,7 +86,7 @@ describe('imageUpload', () => {
     });
 
     it('should handle files that are too large', async () => {
-      const largeFile = new File(['x'.repeat(6 * 1024 * 1024)], 'large.jpg', {
+      const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.jpg', {
         type: 'image/jpeg',
       });
       const userId = 'user-123';
@@ -94,7 +94,7 @@ describe('imageUpload', () => {
       const result = await uploadItemImage(largeFile, userId);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Image size must be less than 5MB');
+      expect(result.error).toBe('Image size must be less than 10MB');
     });
   });
 

@@ -51,7 +51,7 @@ After running migration 003, you need to ensure the storage bucket is properly c
 
 1. **Bucket Creation**: The migration creates an `item-images` bucket
 2. **RLS Policies**: Policies are set up for authenticated users to upload/view/delete their own images
-3. **File Limits**: 5MB file size limit with JPEG, PNG, WebP support
+3. **File Limits**: 10MB file size limit with JPEG, PNG, WebP support
 4. **Public Access**: Images are publicly viewable once uploaded
 
 ## Image Upload Features

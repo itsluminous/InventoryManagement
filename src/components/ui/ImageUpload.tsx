@@ -210,7 +210,7 @@ export function ImageUpload({
 
       {/* Helper Text */}
       <Typography variant="caption" color="text.secondary" display="block">
-        Supported: JPEG, PNG, WebP (max 5MB). You can crop and resize images
+        Supported: JPEG, PNG, WebP (max 10MB). You can crop and resize images
         before uploading.
       </Typography>
 

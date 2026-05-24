@@ -51,6 +51,7 @@ const UNIT_OPTIONS = [
   // Count/Quantity
   { value: 'pcs', label: 'Pieces (pcs)', category: 'Count' },
   { value: 'qty', label: 'Quantity (qty)', category: 'Count' },
+  { value: 'sets', label: 'Sets', category: 'Count' },
   { value: 'units', label: 'Units', category: 'Count' },
   { value: 'items', label: 'Items', category: 'Count' },
   { value: 'boxes', label: 'Boxes', category: 'Count' },

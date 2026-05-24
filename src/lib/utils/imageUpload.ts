@@ -90,9 +90,9 @@ export async function uploadItemImage(
       return { success: false, error: 'Please select a valid image file' };
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      return { success: false, error: 'Image size must be less than 5MB' };
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      return { success: false, error: 'Image size must be less than 10MB' };
     }
 
     // Compress image
@@ -173,9 +173,9 @@ export function validateImageFile(file: File): string | null {
     return 'Please select a valid image file';
   }
 
-  // Check file size (5MB limit)
-  if (file.size > 5 * 1024 * 1024) {
-    return 'Image size must be less than 5MB';
+  // Check file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    return 'Image size must be less than 10MB';
   }
 
   // Check supported formats
