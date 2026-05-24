@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -21,6 +21,7 @@ import Resizer from 'react-image-file-resizer';
 interface ImageCropperProps {
   open: boolean;
   imageSrc: string;
+  imageFile?: File; // Add file prop for PWA compatibility
   onCrop: (croppedBlob: Blob) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -30,6 +31,7 @@ interface ImageCropperProps {
 export function ImageCropper({
   open,
   imageSrc,
+  imageFile,
   onCrop,
   onCancel,
   loading = false,
@@ -41,6 +43,28 @@ export function ImageCropper({
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [internalImageSrc, setInternalImageSrc] = useState<string>('');
+
+  // Create internal blob URL for PWA compatibility
+  useEffect(() => {
+    if (open && imageFile) {
+      // Use the file directly to create a fresh blob URL
+      const url = URL.createObjectURL(imageFile);
+      setInternalImageSrc(url);
+
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else if (open && imageSrc) {
+      // Fallback to provided imageSrc
+      setInternalImageSrc(imageSrc);
+    } else {
+      setInternalImageSrc('');
+    }
+  }, [open, imageFile, imageSrc]);
+
+  // Use the internal image source or fallback to provided imageSrc
+  const displayImageSrc = internalImageSrc || imageSrc;
 
   const handleCrop = async () => {
     if (!completedCrop || !imgRef.current) {
@@ -137,7 +161,7 @@ export function ImageCropper({
             <img
               ref={imgRef}
               alt="Crop me"
-              src={imageSrc}
+              src={displayImageSrc}
               style={{ maxWidth: '100%', maxHeight: '400px' }}
             />
           </ReactCrop>

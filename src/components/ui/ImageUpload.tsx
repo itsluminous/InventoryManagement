@@ -43,6 +43,7 @@ export function ImageUpload({
   const [error, setError] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = () => {
@@ -62,9 +63,10 @@ export function ImageUpload({
 
     setError(null);
 
-    // Create object URL for the cropper
+    // Store the file and create object URL for the cropper
     try {
       const imageUrl = URL.createObjectURL(file);
+      setSelectedFile(file);
       setSelectedImageSrc(imageUrl);
       setShowCropper(true);
     } catch (err) {
@@ -103,8 +105,11 @@ export function ImageUpload({
     } finally {
       setUploading(false);
       // Clean up object URL
-      URL.revokeObjectURL(selectedImageSrc);
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+      }
       setSelectedImageSrc('');
+      setSelectedFile(null);
       // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -117,8 +122,11 @@ export function ImageUpload({
     setError(errorMessage);
     setShowCropper(false);
     // Clean up object URL
-    URL.revokeObjectURL(selectedImageSrc);
+    if (selectedImageSrc) {
+      URL.revokeObjectURL(selectedImageSrc);
+    }
     setSelectedImageSrc('');
+    setSelectedFile(null);
     // Clear file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -128,8 +136,11 @@ export function ImageUpload({
   const handleCropCancel = () => {
     setShowCropper(false);
     // Clean up object URL
-    URL.revokeObjectURL(selectedImageSrc);
+    if (selectedImageSrc) {
+      URL.revokeObjectURL(selectedImageSrc);
+    }
     setSelectedImageSrc('');
+    setSelectedFile(null);
     // Clear file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -252,6 +263,7 @@ export function ImageUpload({
       <ImageCropper
         open={showCropper}
         imageSrc={selectedImageSrc}
+        imageFile={selectedFile || undefined}
         onCrop={handleCropComplete}
         onCancel={handleCropCancel}
         loading={uploading}
