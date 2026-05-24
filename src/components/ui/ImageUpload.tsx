@@ -49,9 +49,7 @@ export function ImageUpload({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -64,59 +62,21 @@ export function ImageUpload({
 
     setError(null);
 
-    // Universal approach: try blob URL first, fallback to FileReader if it fails
-    const tryBlobUrl = () => {
-      try {
-        const imageUrl = URL.createObjectURL(file);
-        setSelectedImageSrc(imageUrl);
-        setShowCropper(true);
-        return true;
-      } catch (err) {
-        console.error('Blob URL creation failed:', err);
-        return false;
-      }
-    };
-
-    const tryFileReader = () => {
-      return new Promise<boolean>(resolve => {
-        try {
-          const fileReader = new FileReader();
-          fileReader.onload = e => {
-            const result = e.target?.result;
-            if (typeof result === 'string') {
-              setSelectedImageSrc(result);
-              setShowCropper(true);
-              resolve(true);
-            } else {
-              resolve(false);
-            }
-          };
-          fileReader.onerror = () => {
-            console.error('FileReader failed');
-            resolve(false);
-          };
-          fileReader.readAsDataURL(file);
-        } catch (err) {
-          console.error('FileReader setup failed:', err);
-          resolve(false);
-        }
-      });
-    };
-
-    // Try blob URL first (faster and more efficient)
-    if (!tryBlobUrl()) {
-      // If blob URL fails, try FileReader
-      const fileReaderSuccess = await tryFileReader();
-      if (!fileReaderSuccess) {
-        setError('Failed to process image file. Please try again.');
-      }
+    // Create object URL for the cropper
+    try {
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImageSrc(imageUrl);
+      setShowCropper(true);
+    } catch (err) {
+      console.error('Failed to create object URL:', err);
+      setError('Failed to process image file. Please try again.');
     }
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
     setShowCropper(false);
     setUploading(true);
-    setError(null); // Clear any previous errors
+    setError(null);
 
     try {
       // Delete existing image if present
@@ -142,10 +102,8 @@ export function ImageUpload({
       setError('Failed to upload image');
     } finally {
       setUploading(false);
-      // Clean up URL only if it's a blob URL
-      if (selectedImageSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(selectedImageSrc);
-      }
+      // Clean up object URL
+      URL.revokeObjectURL(selectedImageSrc);
       setSelectedImageSrc('');
       // Clear file input
       if (fileInputRef.current) {
@@ -155,12 +113,11 @@ export function ImageUpload({
   };
 
   const handleCropError = (errorMessage: string) => {
+    console.error('Crop error:', errorMessage);
     setError(errorMessage);
     setShowCropper(false);
-    // Clean up URL only if it's a blob URL
-    if (selectedImageSrc.startsWith('blob:')) {
-      URL.revokeObjectURL(selectedImageSrc);
-    }
+    // Clean up object URL
+    URL.revokeObjectURL(selectedImageSrc);
     setSelectedImageSrc('');
     // Clear file input
     if (fileInputRef.current) {
@@ -170,10 +127,8 @@ export function ImageUpload({
 
   const handleCropCancel = () => {
     setShowCropper(false);
-    // Clean up URL only if it's a blob URL
-    if (selectedImageSrc.startsWith('blob:')) {
-      URL.revokeObjectURL(selectedImageSrc);
-    }
+    // Clean up object URL
+    URL.revokeObjectURL(selectedImageSrc);
     setSelectedImageSrc('');
     // Clear file input
     if (fileInputRef.current) {
@@ -273,8 +228,8 @@ export function ImageUpload({
 
       {/* Helper Text */}
       <Typography variant="caption" color="text.secondary" display="block">
-        Supported: JPEG, PNG, WebP (max 10MB). You can crop and resize images
-        before uploading.
+        Supported: JPEG, PNG, WebP (max 10MB). Images are automatically cropped
+        and compressed.
       </Typography>
 
       {/* Error Message */}
@@ -299,7 +254,6 @@ export function ImageUpload({
         imageSrc={selectedImageSrc}
         onCrop={handleCropComplete}
         onCancel={handleCropCancel}
-        aspectRatio={1} // Square crop for item images
         loading={uploading}
         onError={handleCropError}
       />

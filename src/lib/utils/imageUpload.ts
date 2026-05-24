@@ -18,66 +18,7 @@ export interface ImageUploadResult {
 }
 
 /**
- * Compress and convert image to WebP format
- */
-export async function compressImage(
-  file: File,
-  options: ImageUploadOptions = {}
-): Promise<Blob> {
-  const {
-    maxWidth = 320,
-    maxHeight = 320,
-    quality = 0.8,
-    format = 'webp',
-  } = options;
-
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      // Calculate new dimensions maintaining aspect ratio
-      let { width, height } = img;
-
-      if (width > height) {
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-      } else {
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      // Draw and compress
-      ctx?.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        blob => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to compress image'));
-          }
-        },
-        `image/${format}`,
-        quality
-      );
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-/**
- * Upload image to Supabase Storage with mobile-specific optimizations
+ * Upload image to Supabase Storage
  */
 export async function uploadItemImage(
   file: File,
@@ -95,51 +36,19 @@ export async function uploadItemImage(
       return { success: false, error: 'Image size must be less than 10MB' };
     }
 
-    // Compress image (restore original settings after bucket limit is updated to 10MB)
-    const compressedBlob = await compressImage(file, {
-      maxWidth: 320, // Original value
-      maxHeight: 320, // Original value
-      quality: 0.8, // Original value
-      format: 'webp',
-    });
-
     // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2);
     const fileName = `${userId}/${itemId || randomId}_${timestamp}.webp`;
 
-    // Upload to Supabase Storage with retry logic for mobile
+    // Upload to Supabase Storage
     const supabase = createClient();
-
-    // First attempt
-    let uploadResult = await supabase.storage
+    const { data, error } = await supabase.storage
       .from('item-images')
-      .upload(fileName, compressedBlob, {
-        contentType: 'image/webp',
+      .upload(fileName, file, {
+        contentType: file.type,
         upsert: false,
       });
-
-    // If first attempt fails on mobile, try with different approach
-    if (
-      uploadResult.error &&
-      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      )
-    ) {
-      console.log('Retrying upload for mobile device...');
-
-      // Wait a bit and retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      uploadResult = await supabase.storage
-        .from('item-images')
-        .upload(fileName, compressedBlob, {
-          contentType: 'image/webp',
-          upsert: false,
-        });
-    }
-
-    const { data, error } = uploadResult;
 
     if (error) {
       console.error('Upload error:', error);

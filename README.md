@@ -22,7 +22,7 @@ A comprehensive inventory management system, featuring real-time tracking, FIFO 
 - **UI Library**: Material-UI (MUI) v5 with custom theming
 - **Database**: Supabase (PostgreSQL with real-time capabilities and file storage)
 - **Authentication**: Supabase Auth with Row Level Security
-- **Image Processing**: Client-side compression and WebP conversion with react-easy-crop
+- **Image Processing**: Client-side compression and WebP conversion with react-image-crop and react-image-file-resizer
 - **PWA**: next-pwa with Workbox for service worker management
 - **Charts**: Recharts for data visualization
 - **Testing**: Jest, React Testing Library, Playwright
@@ -171,7 +171,7 @@ The application uses four main tables:
 #### Image Management System
 
 - **Client-side Image Processing**: Automatic compression to 320px width and WebP conversion
-- **Image Cropping**: Professional cropping interface using react-easy-crop library
+- **Image Cropping**: Professional cropping interface using react-image-crop library
 - **Supabase Storage Integration**: Secure file storage with Row Level Security
 - **Image Preview**: Click-to-expand image previews on all pages
 
