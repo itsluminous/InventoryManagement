@@ -23,7 +23,8 @@ export interface ImageUploadResult {
 export async function uploadItemImage(
   file: File,
   userId: string,
-  itemId?: string
+  itemId?: string,
+  itemTitle?: string
 ): Promise<ImageUploadResult> {
   try {
     // Validate file type
@@ -36,10 +37,28 @@ export async function uploadItemImage(
       return { success: false, error: 'Image size must be less than 10MB' };
     }
 
-    // Generate unique filename
+    // Generate filename based on item title or fallback to random
     const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2);
-    const fileName = `${userId}/${itemId || randomId}_${timestamp}.webp`;
+    let baseFileName: string;
+
+    if (itemTitle) {
+      // Convert title to underscore-separated lowercase filename
+      const sanitizedTitle = itemTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/-+/g, '_') // Replace hyphens with underscores
+        .replace(/_+/g, '_') // Replace multiple underscores with single
+        .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+
+      baseFileName = `inventory_${sanitizedTitle || 'untitled'}`;
+    } else {
+      // Fallback to random ID
+      const randomId = Math.random().toString(36).substring(2);
+      baseFileName = `inventory_${itemId || randomId}`;
+    }
+
+    const fileName = `${userId}/${baseFileName}_${timestamp}.webp`;
 
     // Upload to Supabase Storage
     const supabase = createClient();

@@ -466,6 +466,7 @@ export default function MasterlistPage() {
               }
               userId={user?.id || ''}
               itemId={editingItem?.id}
+              itemTitle={formData.name}
               disabled={submitting}
             />
           </Box>

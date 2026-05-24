@@ -10,14 +10,7 @@ import {
 
 // Mock Supabase client
 jest.mock('@/lib/supabase/client', () => ({
-  createClient: jest.fn(() => ({
-    storage: {
-      from: jest.fn(() => ({
-        upload: jest.fn(),
-        remove: jest.fn(),
-      })),
-    },
-  })),
+  createClient: jest.fn(),
 }));
 
 describe('imageUpload', () => {
@@ -95,6 +88,206 @@ describe('imageUpload', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Image size must be less than 10MB');
+    });
+  });
+
+  describe('filename generation with inventory prefix', () => {
+    let mockUpload: jest.Mock;
+    let mockFrom: jest.Mock;
+    let mockStorage: jest.Mock;
+    let mockCreateClient: jest.Mock;
+
+    beforeEach(() => {
+      mockUpload = jest.fn().mockResolvedValue({
+        data: { path: 'test-path' },
+        error: null,
+      });
+      mockFrom = jest.fn().mockReturnValue({
+        upload: mockUpload,
+        getPublicUrl: jest.fn().mockReturnValue({
+          data: { publicUrl: 'https://example.com/test-path' },
+        }),
+      });
+      mockStorage = {
+        from: mockFrom,
+      } as any;
+
+      mockCreateClient = jest.fn().mockReturnValue({
+        storage: mockStorage,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { createClient } = require('@/lib/supabase/client');
+      createClient.mockImplementation(mockCreateClient);
+    });
+
+    it('should generate filename with inventory prefix when itemTitle is provided', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Steel Bucket';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_steel_bucket_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should sanitize item title and add inventory prefix', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Coffee Beans - Premium Grade #1';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^user-123\/inventory_coffee_beans_premium_grade_1_\d+\.webp$/
+        ),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle special characters in item title', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Item @#$%^&*()!';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_item_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle multiple spaces and hyphens in item title', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Multi   Space--Item   Name';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^user-123\/inventory_multi_space_item_name_\d+\.webp$/
+        ),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle empty or whitespace-only item title', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = '   ';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_untitled_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should use inventory prefix with itemId when no itemTitle is provided', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemId = 'item-456';
+
+      await uploadItemImage(file, userId, itemId);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_item-456_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should use inventory prefix with random ID when neither itemTitle nor itemId is provided', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+
+      await uploadItemImage(file, userId);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_[a-z0-9]+_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle very long item titles', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle =
+        'This is a very long item title that should be properly sanitized and converted to underscore format';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^user-123\/inventory_this_is_a_very_long_item_title_that_should_be_properly_sanitized_and_converted_to_underscore_format_\d+\.webp$/
+        ),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle item titles with numbers', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Item 123 Version 2.0';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^user-123\/inventory_item_123_version_20_\d+\.webp$/
+        ),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should handle item titles with leading and trailing underscores', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = '_Item Name_';
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-123\/inventory_item_name_\d+\.webp$/),
+        file,
+        expect.any(Object)
+      );
+    });
+
+    it('should ensure filename uniqueness with timestamp', async () => {
+      const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const userId = 'user-123';
+      const itemTitle = 'Test Item';
+
+      // Mock Date.now to return a specific timestamp
+      const mockTimestamp = 1716567890123;
+      jest.spyOn(Date, 'now').mockReturnValue(mockTimestamp);
+
+      await uploadItemImage(file, userId, undefined, itemTitle);
+
+      expect(mockUpload).toHaveBeenCalledWith(
+        `user-123/inventory_test_item_${mockTimestamp}.webp`,
+        file,
+        expect.any(Object)
+      );
+
+      // Restore Date.now
+      jest.restoreAllMocks();
     });
   });
 

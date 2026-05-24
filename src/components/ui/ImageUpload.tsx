@@ -27,6 +27,7 @@ interface ImageUploadProps {
   onChange: (imageUrl: string | null) => void;
   userId: string;
   itemId?: string;
+  itemTitle?: string; // Add item title prop
   disabled?: boolean;
   size?: number;
 }
@@ -36,6 +37,7 @@ export function ImageUpload({
   onChange,
   userId,
   itemId,
+  itemTitle,
   disabled = false,
   size = 80,
 }: ImageUploadProps) {
@@ -92,7 +94,12 @@ export function ImageUpload({
       });
 
       // Upload cropped image
-      const result = await uploadItemImage(croppedFile, userId, itemId);
+      const result = await uploadItemImage(
+        croppedFile,
+        userId,
+        itemId,
+        itemTitle
+      );
 
       if (result.success && result.url) {
         onChange(result.url);
