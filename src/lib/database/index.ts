@@ -254,15 +254,41 @@ export class MasterItemService {
         };
       }
 
-      // Proceed with deletion
-      const { error } = await this.supabase
+      // Get the item to check if it has an image
+      const { data: item, error: fetchError } = await this.supabase
+        .from('master_items')
+        .select('image_url')
+        .eq('id', itemId)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        return { data: null, error: fetchError.message };
+      }
+
+      // Delete the database record first
+      const { error: deleteError } = await this.supabase
         .from('master_items')
         .delete()
         .eq('id', itemId)
         .eq('user_id', userId);
 
-      if (error) {
-        return { data: null, error: error.message };
+      if (deleteError) {
+        return { data: null, error: deleteError.message };
+      }
+
+      // If the item had an image, delete it from storage
+      if (item?.image_url) {
+        try {
+          // Import deleteItemImage function
+          const { deleteItemImage } = await import('@/lib/utils/imageUpload');
+          await deleteItemImage(item.image_url);
+          // Note: We don't fail the entire operation if image deletion fails
+          // since the database record is already deleted
+        } catch (imageError) {
+          console.warn('Failed to delete associated image:', imageError);
+          // Continue - the main deletion was successful
+        }
       }
 
       return { data: true, error: null };

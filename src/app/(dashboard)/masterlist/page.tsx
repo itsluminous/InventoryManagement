@@ -196,6 +196,9 @@ export default function MasterlistPage() {
 
     try {
       if (editingItem) {
+        // Check if image was removed (had image before, now null)
+        const imageWasRemoved = editingItem.image_url && !formData.image_url;
+
         // Update existing item
         const result = await dbService.masterItems.updateMasterItem(
           editingItem.id,
@@ -210,6 +213,18 @@ export default function MasterlistPage() {
         if (result.error) {
           setError(result.error);
         } else {
+          // If image was removed, delete it from storage
+          if (imageWasRemoved && editingItem.image_url) {
+            try {
+              const { deleteItemImage } =
+                await import('@/lib/utils/imageUpload');
+              await deleteItemImage(editingItem.image_url);
+            } catch (imageError) {
+              console.warn('Failed to delete removed image:', imageError);
+              // Don't show error to user since the main update was successful
+            }
+          }
+
           setSuccess('Master item updated successfully');
           handleCloseDialog();
           loadMasterItems();

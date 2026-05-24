@@ -209,19 +209,29 @@ describe('DatabaseService', () => {
         error: null,
       });
 
-      // Create a fresh mock for the delete operation
-      const deleteResult = { error: null } as any;
+      // Mock the select operation to get item data (for image_url check)
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { image_url: null }, // No image to delete
+              error: null,
+            }),
+          }),
+        }),
+      });
 
-      // Mock the delete chain: from().delete().eq().eq()
+      // Mock the delete operation
       const mockDelete = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue(deleteResult),
+          eq: jest.fn().mockResolvedValue({ error: null }),
         }),
-      }) as any;
-
-      mockSupabaseClient.from.mockReturnValueOnce({
-        delete: mockDelete,
       });
+
+      // Set up the from() mock to return different operations based on call order
+      mockSupabaseClient.from
+        .mockReturnValueOnce({ select: mockSelect }) // First call for fetching item
+        .mockReturnValueOnce({ delete: mockDelete }); // Second call for deletion
 
       const result = await masterItemService.deleteMasterItem(
         'item-1',
@@ -237,6 +247,48 @@ describe('DatabaseService', () => {
           p_user_id: 'user-123',
         }
       );
+    });
+
+    it('should delete item with image and attempt image cleanup', async () => {
+      // Mock the can_delete_master_item function to return true
+      mockSupabaseClient.rpc.mockResolvedValueOnce({
+        data: true,
+        error: null,
+      });
+
+      // Mock the select operation to get item data with image
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { image_url: 'https://example.com/image.jpg' },
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      // Mock the delete operation
+      const mockDelete = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        }),
+      });
+
+      // Set up the from() mock to return different operations based on call order
+      mockSupabaseClient.from
+        .mockReturnValueOnce({ select: mockSelect }) // First call for fetching item
+        .mockReturnValueOnce({ delete: mockDelete }); // Second call for deletion
+
+      const result = await masterItemService.deleteMasterItem(
+        'item-1',
+        'user-123'
+      );
+
+      expect(result.data).toBe(true);
+      expect(result.error).toBeNull();
+      // Note: Image deletion is attempted but we don't test the actual import/call
+      // since it's wrapped in a try-catch and doesn't affect the result
     });
 
     it('should prevent deletion when item has transactions', async () => {

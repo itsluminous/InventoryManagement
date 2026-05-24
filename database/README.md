@@ -62,7 +62,19 @@ The image upload system includes:
 - **WebP conversion**: Automatic conversion to WebP format for better compression
 - **File validation**: Type and size validation before upload
 - **Unique naming**: Files are stored with user ID prefix and timestamp
-- **Cleanup**: Old images are automatically deleted when replaced
+- **Automatic cleanup**: Images are automatically deleted from storage when:
+  - A master item is deleted
+  - An image is replaced with a new one
+  - An image is removed from an item (set to null)
+
+## Image Cleanup Behavior
+
+When images are removed or replaced:
+
+1. **Item Deletion**: When a master item is deleted, its associated image is automatically removed from Supabase storage
+2. **Image Replacement**: When uploading a new image to replace an existing one, the old image is deleted first
+3. **Image Removal**: When removing an image from an item (setting it to null), the image is deleted from storage
+4. **Error Handling**: If image deletion fails, it doesn't prevent the main operation (item deletion/update) from succeeding
 
 ## Troubleshooting
 
