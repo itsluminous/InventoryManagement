@@ -5,6 +5,13 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
     {
+      urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/.*/i,
+      handler: 'NetworkOnly',
+      options: {
+        cacheName: 'supabase-storage',
+      },
+    },
+    {
       urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
       handler: 'NetworkFirst',
       options: {

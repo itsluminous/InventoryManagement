@@ -64,10 +64,53 @@ export function ImageUpload({
 
     setError(null);
 
-    // Create object URL for cropper
-    const imageUrl = URL.createObjectURL(file);
-    setSelectedImageSrc(imageUrl);
-    setShowCropper(true);
+    // Universal approach: try blob URL first, fallback to FileReader if it fails
+    const tryBlobUrl = () => {
+      try {
+        const imageUrl = URL.createObjectURL(file);
+        setSelectedImageSrc(imageUrl);
+        setShowCropper(true);
+        return true;
+      } catch (err) {
+        console.error('Blob URL creation failed:', err);
+        return false;
+      }
+    };
+
+    const tryFileReader = () => {
+      return new Promise<boolean>(resolve => {
+        try {
+          const fileReader = new FileReader();
+          fileReader.onload = e => {
+            const result = e.target?.result;
+            if (typeof result === 'string') {
+              setSelectedImageSrc(result);
+              setShowCropper(true);
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          };
+          fileReader.onerror = () => {
+            console.error('FileReader failed');
+            resolve(false);
+          };
+          fileReader.readAsDataURL(file);
+        } catch (err) {
+          console.error('FileReader setup failed:', err);
+          resolve(false);
+        }
+      });
+    };
+
+    // Try blob URL first (faster and more efficient)
+    if (!tryBlobUrl()) {
+      // If blob URL fails, try FileReader
+      const fileReaderSuccess = await tryFileReader();
+      if (!fileReaderSuccess) {
+        setError('Failed to process image file. Please try again.');
+      }
+    }
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
@@ -99,8 +142,10 @@ export function ImageUpload({
       setError('Failed to upload image');
     } finally {
       setUploading(false);
-      // Clean up object URL
-      URL.revokeObjectURL(selectedImageSrc);
+      // Clean up URL only if it's a blob URL
+      if (selectedImageSrc.startsWith('blob:')) {
+        URL.revokeObjectURL(selectedImageSrc);
+      }
       setSelectedImageSrc('');
       // Clear file input
       if (fileInputRef.current) {
@@ -112,8 +157,10 @@ export function ImageUpload({
   const handleCropError = (errorMessage: string) => {
     setError(errorMessage);
     setShowCropper(false);
-    // Clean up object URL
-    URL.revokeObjectURL(selectedImageSrc);
+    // Clean up URL only if it's a blob URL
+    if (selectedImageSrc.startsWith('blob:')) {
+      URL.revokeObjectURL(selectedImageSrc);
+    }
     setSelectedImageSrc('');
     // Clear file input
     if (fileInputRef.current) {
@@ -123,8 +170,10 @@ export function ImageUpload({
 
   const handleCropCancel = () => {
     setShowCropper(false);
-    // Clean up object URL
-    URL.revokeObjectURL(selectedImageSrc);
+    // Clean up URL only if it's a blob URL
+    if (selectedImageSrc.startsWith('blob:')) {
+      URL.revokeObjectURL(selectedImageSrc);
+    }
     setSelectedImageSrc('');
     // Clear file input
     if (fileInputRef.current) {

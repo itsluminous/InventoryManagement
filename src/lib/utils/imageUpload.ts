@@ -77,7 +77,7 @@ export async function compressImage(
 }
 
 /**
- * Upload image to Supabase Storage
+ * Upload image to Supabase Storage with mobile-specific optimizations
  */
 export async function uploadItemImage(
   file: File,
@@ -108,14 +108,38 @@ export async function uploadItemImage(
     const randomId = Math.random().toString(36).substring(2);
     const fileName = `${userId}/${itemId || randomId}_${timestamp}.webp`;
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage with retry logic for mobile
     const supabase = createClient();
-    const { data, error } = await supabase.storage
+
+    // First attempt
+    let uploadResult = await supabase.storage
       .from('item-images')
       .upload(fileName, compressedBlob, {
         contentType: 'image/webp',
         upsert: false,
       });
+
+    // If first attempt fails on mobile, try with different approach
+    if (
+      uploadResult.error &&
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    ) {
+      console.log('Retrying upload for mobile device...');
+
+      // Wait a bit and retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      uploadResult = await supabase.storage
+        .from('item-images')
+        .upload(fileName, compressedBlob, {
+          contentType: 'image/webp',
+          upsert: false,
+        });
+    }
+
+    const { data, error } = uploadResult;
 
     if (error) {
       console.error('Upload error:', error);

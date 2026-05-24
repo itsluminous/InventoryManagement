@@ -32,8 +32,16 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', error => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
+    image.addEventListener('error', error => {
+      console.error('Image load error:', error);
+      reject(new Error('Failed to load image for cropping'));
+    });
+
+    // Only set crossOrigin for external URLs, not for blob or data URLs
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      image.setAttribute('crossOrigin', 'anonymous');
+    }
+
     image.src = url;
   });
 
@@ -108,8 +116,17 @@ export function ImageCropper({
       onCrop(croppedBlob);
     } catch (error) {
       console.error('Error cropping image:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to crop image';
+      let errorMessage = 'Failed to crop image';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to load image')) {
+          errorMessage =
+            'Image could not be loaded for cropping. Please try selecting the image again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       if (onError) {
         onError(errorMessage);
       }
