@@ -95,11 +95,11 @@ export async function uploadItemImage(
       return { success: false, error: 'Image size must be less than 10MB' };
     }
 
-    // Compress image
+    // Compress image (restore original settings after bucket limit is updated to 10MB)
     const compressedBlob = await compressImage(file, {
-      maxWidth: 320,
-      maxHeight: 320,
-      quality: 0.8,
+      maxWidth: 320,  // Original value
+      maxHeight: 320, // Original value
+      quality: 0.8,   // Original value
       format: 'webp',
     });
 
@@ -119,7 +119,17 @@ export async function uploadItemImage(
 
     if (error) {
       console.error('Upload error:', error);
-      return { success: false, error: 'Failed to upload image' };
+      
+      // Provide more specific error messages
+      if (error.message?.includes('file_size_limit')) {
+        return { success: false, error: 'Image size exceeds storage limit. Please try a smaller image.' };
+      }
+      
+      if (error.message?.includes('mime_type')) {
+        return { success: false, error: 'Unsupported image format. Please use JPEG, PNG, or WebP.' };
+      }
+      
+      return { success: false, error: `Upload failed: ${error.message || 'Unknown error'}` };
     }
 
     // Get public URL
